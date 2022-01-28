@@ -1,0 +1,16 @@
+*{
+-fx-font-size: 16pt;
+-fx-text-fill: black;
+}
+.tree-cell:selected{
+    -fx-background-color: white;
+}
+.tree-cell:expanded{
+    -fx-background-color: white;
+}
+.tree-cell > .tree-disclosure-node > .arrow  {
+    -fx-background-color: gray;
+}
+.tree-cell:expanded > .tree-disclosure-node > .arrow {
+    -fx-background-color: gray;
+}
