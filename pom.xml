@@ -20,6 +20,12 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.73.Final</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.35</version>
+        </dependency>
+
 
     </dependencies>
     <build>
