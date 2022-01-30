@@ -1,7 +1,9 @@
 package com.sainnt.server.handler;
 
 import com.sainnt.server.entity.User;
+import com.sainnt.server.exception.UserAlreadyLoggedInException;
 import com.sainnt.server.pipebuilder.PipeLineBuilder;
+import com.sainnt.server.service.AuthenticationService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -11,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 @Slf4j
 public class LoginHandler extends ChannelInboundHandlerAdapter {
+    private final AuthenticationService authService;
     private enum authState {
         readLoginSize,readLogin,readPasswordSize, readPassword
     }
@@ -92,34 +95,38 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
                                         passwordSize - contentBuffer.readableBytes()));
                 if(contentBuffer.readableBytes()<passwordSize)
                     return;
-                User user = authenticate(login, contentBuffer.readCharSequence(passwordSize, StandardCharsets.UTF_8).toString());
-                if(user==null) {
-                    //Auth failed
-                    ctx.write(ctx.alloc().buffer(4).writeInt(101));
-                    contentBuffer.clear();
-                }
-                else {
-                    ctx.write(ctx.alloc().buffer(4).writeInt(100));
-                    pipeBuilder.buildUserPipeLine(ctx.pipeline(),user);
-                    ctx.pipeline().remove(this);
+                byte[] password = new byte[passwordSize];
+                contentBuffer.readBytes(password);
+                try{
+                    User user = authService.authenticate(login, password);
+                    if(user==null) {
+                        //Auth failed
+                        ctx.write(ctx.alloc().buffer(4).writeInt(101));
+                    }
+                    else {
+                        ctx.write(ctx.alloc().buffer(4).writeInt(100));
+                        pipeBuilder.buildUserPipeLine(ctx.pipeline(),user);
+                        ctx.pipeline().remove(this);
+                    }
+                }catch (UserAlreadyLoggedInException exception){
+                    //User is logged in
+                    ctx.write(ctx.alloc().buffer(4).writeInt(102));
                 }
                 ctx.flush();
+                contentBuffer.clear();
         }
         in.release();
 
 
     }
-    private User authenticate(String login, String password){
-        if(login.equals("admin") && password.equals("admin"))
-            return new User(1,login);
-        return null;
-    }
 
 
 
-    public LoginHandler(int HEADER_SIZE, PipeLineBuilder builder) {
+
+    public LoginHandler(int HEADER_SIZE, PipeLineBuilder builder, AuthenticationService authService) {
         this.sizeHeader = HEADER_SIZE;
         this.pipeBuilder = builder;
+        this.authService = authService;
     }
 
 }
