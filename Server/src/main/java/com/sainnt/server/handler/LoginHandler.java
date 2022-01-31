@@ -1,5 +1,6 @@
 package com.sainnt.server.handler;
 
+import com.sainnt.server.dto.RegistrationResult;
 import com.sainnt.server.entity.User;
 import com.sainnt.server.exception.UserAlreadyLoggedInException;
 import com.sainnt.server.pipebuilder.PipeLineBuilder;
@@ -15,23 +16,25 @@ import java.nio.charset.StandardCharsets;
 public class LoginHandler extends ChannelInboundHandlerAdapter {
     private final AuthenticationService authService;
     private enum authState {
-        readLoginSize,readLogin,readPasswordSize, readPassword
+        regOrLogin,readLoginSize,readLogin,readEmailSize,readEmail,readPasswordSize, readPassword
     }
     private final PipeLineBuilder pipeBuilder;
     private ByteBuf headerBuffer;
     private ByteBuf contentBuffer;
-    private final int sizeHeader;
+    private final int headerSize;
     private int loginSize = -1;
     private int passwordSize = -1;
+    private int emailSize = -1;
     private authState currentState;
 
-    private String login = "";
-
+    private boolean isRegistering;
+    private String username;
+    private String email;
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) {
-        headerBuffer = ctx.alloc().buffer(sizeHeader);
-        currentState = authState.readLoginSize;
+        headerBuffer = ctx.alloc().buffer(headerSize);
+        currentState = authState.regOrLogin;
     }
 
     @Override
@@ -46,48 +49,57 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        //For performance avoided many function calls
         ByteBuf in = (ByteBuf) msg;
+        if(in.readableBytes()<1)
+            return;
         switch (currentState)
         {
+            case regOrLogin:
+                byte b = in.readByte();
+                if (b==0){
+                    isRegistering = false;
+                    currentState = authState.readLoginSize;
+                }
+                else if(b == 1)
+                {
+                    isRegistering = true;
+                    currentState = authState.readLoginSize;
+                }
+                else
+                    return;
             case readLoginSize:
-                headerBuffer
-                        .writeBytes(in,
-                                Math.min(in.readableBytes(),
-                                        sizeHeader - headerBuffer.readableBytes()));
-                if(headerBuffer.readableBytes() < sizeHeader)
+                loginSize = readHeader(in,ctx);
+                if (loginSize == -1)
                     return;
-                loginSize = headerBuffer.readInt();
                 currentState = authState.readLogin;
-                if (contentBuffer==null)
-                    contentBuffer = ctx.alloc().buffer(loginSize);
-                if(contentBuffer.capacity()<loginSize) {
-                    contentBuffer.capacity( loginSize - contentBuffer.capacity());
-                }
-                headerBuffer.clear();
             case readLogin:
-                contentBuffer.
-                        writeBytes(in,
-                                Math.min(in.readableBytes(),
-                                        loginSize - contentBuffer.readableBytes()));
-                if(contentBuffer.readableBytes() < loginSize)
+                username = readString(in,loginSize);
+                if(username ==null)
                     return;
-                login = contentBuffer.readCharSequence(loginSize, StandardCharsets.UTF_8).toString();
+                if(isRegistering)
+                    currentState = authState.readEmailSize;
+                else
+                    currentState = authState.readPasswordSize;
+
+
+            case readEmailSize:
+                emailSize = readHeader(in,ctx);
+                if(emailSize==-1)
+                    return;
+                currentState = authState.readEmail;
+
+            case readEmail:
+                email = readString(in,emailSize);
+                if(email==null)
+                    return;
                 currentState = authState.readPasswordSize;
-                contentBuffer.clear();
+
             case readPasswordSize:
-                headerBuffer
-                        .writeBytes(in,
-                                Math.min(in.readableBytes(),
-                                        sizeHeader - headerBuffer.readableBytes()));
-                if(headerBuffer.readableBytes()<sizeHeader)
+                passwordSize = readHeader(in,ctx);
+                if(passwordSize ==-1)
                     return;
-                passwordSize = headerBuffer.readInt();
                 currentState = authState.readPassword;
-                if(contentBuffer.capacity()<passwordSize) {
-                    contentBuffer.capacity( passwordSize - contentBuffer.capacity());
-                }
-                headerBuffer.clear();
+
             case readPassword:
                 contentBuffer.
                         writeBytes(in,
@@ -97,34 +109,87 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
                     return;
                 byte[] password = new byte[passwordSize];
                 contentBuffer.readBytes(password);
-                try{
-                    User user = authService.authenticate(login, password);
-                    if(user==null) {
-                        //Auth failed
-                        ctx.write(ctx.alloc().buffer(4).writeInt(101));
+                if(isRegistering)
+                {
+                    RegistrationResult regResult = authService.registerUser(username, email, password);
+                    if(regResult==RegistrationResult.success)
+                        sendCode(ctx, 50);
+                    else if(regResult == RegistrationResult.email_invalid)
+                        sendCode(ctx, 51);
+                    else if(regResult == RegistrationResult.password_invalid)
+                        sendCode(ctx, 52);
+                    else if(regResult == RegistrationResult.username_occupied)
+                        sendCode(ctx, 53);
+                    else if(regResult == RegistrationResult.email_exists)
+                        sendCode(ctx, 54);
+                    else if(regResult == RegistrationResult.registration_failed)
+                        sendCode(ctx,55);
+                }
+                else
+                {
+                    try{
+                        User user = authService.authenticate(username, password);
+                        if(user==null) {
+                            //Auth failed
+                            sendCode(ctx, 101);
+                        }
+                        else {
+                            sendCode(ctx, 100);
+                            pipeBuilder.buildUserPipeLine(ctx.pipeline(),user);
+                            ctx.pipeline().remove(this);
+                        }
+                    }catch (UserAlreadyLoggedInException exception){
+                        //User is logged in
+                        sendCode(ctx, 102);
                     }
-                    else {
-                        ctx.write(ctx.alloc().buffer(4).writeInt(100));
-                        pipeBuilder.buildUserPipeLine(ctx.pipeline(),user);
-                        ctx.pipeline().remove(this);
-                    }
-                }catch (UserAlreadyLoggedInException exception){
-                    //User is logged in
-                    ctx.write(ctx.alloc().buffer(4).writeInt(102));
                 }
                 ctx.flush();
+                username =null;
+                email = null;
                 contentBuffer.clear();
+                currentState = authState.regOrLogin;
         }
         in.release();
 
 
     }
 
+    private void sendCode(ChannelHandlerContext ctx, int code) {
+        ctx.write(ctx.alloc().buffer(4).writeInt(code));
+    }
 
 
+    private int readHeader(ByteBuf in, ChannelHandlerContext ctx){
+        headerBuffer
+                .writeBytes(in,
+                        Math.min(in.readableBytes(),
+                                headerSize - headerBuffer.readableBytes()));
+        if(headerBuffer.readableBytes() < headerSize)
+            return -1;
+        int header = headerBuffer.readInt();
+        if (contentBuffer==null)
+            contentBuffer = ctx.alloc().buffer(header);
+        if(contentBuffer.capacity()<header) {
+            contentBuffer.capacity( header - contentBuffer.capacity());
+        }
+        headerBuffer.clear();
+        return header;
+    }
+
+    private String readString(ByteBuf in, int strSize){
+        contentBuffer.
+                writeBytes(in,
+                        Math.min(in.readableBytes(),
+                                strSize - contentBuffer.readableBytes()));
+        if(contentBuffer.readableBytes() < strSize)
+            return null;
+        String str = contentBuffer.readCharSequence(strSize, StandardCharsets.UTF_8).toString();
+        contentBuffer.clear();
+        return str;
+    }
 
     public LoginHandler(int HEADER_SIZE, PipeLineBuilder builder, AuthenticationService authService) {
-        this.sizeHeader = HEADER_SIZE;
+        this.headerSize = HEADER_SIZE;
         this.pipeBuilder = builder;
         this.authService = authService;
     }
