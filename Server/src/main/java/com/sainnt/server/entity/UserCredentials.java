@@ -1,21 +1,37 @@
 package com.sainnt.server.entity;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @NoArgsConstructor
 @Table(name="users_credentials")
 public class UserCredentials {
     @Id
-    private String username;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
     @Lob
     @Column(name = "enc_password", columnDefinition = "BLOB")
     private byte[] encPassword;
-    @OneToOne
-    @JoinColumn(name = "user_id",referencedColumnName = "id")
-    private User user;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        UserCredentials that = (UserCredentials) o;
+        return  Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
