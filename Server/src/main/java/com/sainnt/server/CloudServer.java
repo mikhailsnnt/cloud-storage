@@ -11,7 +11,6 @@ import com.sainnt.server.service.AuthenticationService;
 import com.sainnt.server.service.impl.AuthenticationServiceImpl;
 import com.sainnt.server.util.HibernateUtil;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -19,9 +18,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 public class CloudServer {
     private final int port;
-    private UserRepository userRepository;
     private AuthenticationService authenticationService;
-    private PasswordEncryptionProvider passwordEncryptionProvider;
     private PipeLineBuilder pipeLineBuilder;
     public CloudServer(int port) {
         this.port = port;
@@ -56,10 +53,10 @@ public class CloudServer {
     }
 
     private void injectDependencies(){
-        userRepository = new UserRepositoryImpl();
-        passwordEncryptionProvider = new PasswordEncryptionProviderImpl();
-        pipeLineBuilder = new PipeLineBuilderImpl();
-        authenticationService = new AuthenticationServiceImpl(userRepository,passwordEncryptionProvider);
+        UserRepository userRepository = new UserRepositoryImpl();
+        PasswordEncryptionProvider passwordEncryptionProvider = new PasswordEncryptionProviderImpl();
+        authenticationService = new AuthenticationServiceImpl(userRepository, passwordEncryptionProvider);
+        pipeLineBuilder = new PipeLineBuilderImpl(authenticationService);
 
 
     }
