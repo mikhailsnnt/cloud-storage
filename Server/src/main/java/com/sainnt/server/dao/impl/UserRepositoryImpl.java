@@ -53,6 +53,11 @@ public class UserRepositoryImpl implements UserRepository {
         Session session =  HibernateUtil.getSessionFactory().getCurrentSession();
         Transaction transaction = session.beginTransaction();
         User user = loadUserByUsername(session,username);
+        if(user  == null)
+        {
+            transaction.commit();
+            return null;
+        }
         Hibernate.initialize(user.getCredentials());
         transaction.commit();
         return user;
