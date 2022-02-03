@@ -4,13 +4,14 @@
         "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
     <session-factory>
-        <property name="connection.url">secret</property>
-        <property name="connection.username">secret</property>
-        <property name="connection.password">secret</property>
         <property name="show_sql">true</property>
         <property name="default_schema">cloud_storage</property>
-        <property name="dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="dialect">org.hibernate.dialect.MySQL5InnoDBDialect</property>
         <property name="hibernate.hbm2ddl.auto">update</property>
-        <property name="current_session_context_class">thread</property>
+        <property name="current_session_context_class">managed</property>
+        <mapping class="com.sainnt.server.entity.User"/>
+        <mapping class="com.sainnt.server.entity.UserCredentials"/>
+        <mapping class="com.sainnt.server.entity.File"/>
+        <mapping class="com.sainnt.server.entity.Directory"/>
     </session-factory>
 </hibernate-configuration>
