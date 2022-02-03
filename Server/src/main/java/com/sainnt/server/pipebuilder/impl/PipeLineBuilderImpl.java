@@ -1,21 +1,38 @@
 package com.sainnt.server.pipebuilder.impl;
 
 import com.sainnt.server.entity.User;
+import com.sainnt.server.handler.ExceptionHandler;
+import com.sainnt.server.handler.OperationDecoder;
+import com.sainnt.server.handler.req_handler.CreateFolderRequestHandler;
+import com.sainnt.server.handler.req_handler.UploadFileRequestHandler;
 import com.sainnt.server.pipebuilder.PipeLineBuilder;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import com.sainnt.server.service.AuthenticationService;
+import com.sainnt.server.service.FileOperationsService;
+import com.sainnt.server.service.NavigationService;
 import io.netty.channel.ChannelPipeline;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PipeLineBuilderImpl implements PipeLineBuilder {
+    private final AuthenticationService authService;
+    private final FileOperationsService fileService;
+    private final NavigationService navigationService;
+    @Autowired
+    public PipeLineBuilderImpl(AuthenticationService authService, FileOperationsService fileService, NavigationService navigationService) {
+        this.authService = authService;
+        this.fileService = fileService;
+        this.navigationService = navigationService;
+    }
+
     @Override
     public void buildUserPipeLine(ChannelPipeline pipeline, User user) {
-        //not implemented. Only demonstration
-        pipeline.addLast( new  ChannelInboundHandlerAdapter(){
-            @Override
-            public void channelRead(ChannelHandlerContext ctx, Object msg) {
-                System.out.println( ((ByteBuf)msg).readByte());
-            }
-        });
+
+        OperationDecoder operationDecoder = new OperationDecoder(user, authService);
+        pipeline.addLast(operationDecoder);
+        pipeline.addLast(new CreateFolderRequestHandler(navigationService));
+        pipeline.addLast(new UploadFileRequestHandler(fileService,operationDecoder));
+
+        pipeline.addLast(new ExceptionHandler());
     }
 }
