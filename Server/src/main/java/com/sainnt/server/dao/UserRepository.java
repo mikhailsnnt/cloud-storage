@@ -1,14 +1,13 @@
 package com.sainnt.server.dao;
 
-import com.sainnt.server.dto.RegistrationResult;
 import com.sainnt.server.entity.User;
-import com.sainnt.server.entity.UserCredentials;
+
+import java.util.Optional;
 
 public interface UserRepository {
-    User saveUser(User user);
-    User getUserById(long id);
-    User getUserByUsername(String username);
-    User getUserAndFetchCredentials(String username);
-    boolean usernameExists(String username);
-    boolean emailExists(String email);
+    void registerUser(User user) throws DaoException;
+    Optional<User> getUserById(long id) throws DaoException;
+    Optional<User> getUserByUsername(String username) throws DaoException;
+    boolean usernameExists(String username) throws DaoException;
+    boolean emailExists(String email) throws DaoException;
 }

@@ -1,97 +1,99 @@
 package com.sainnt.server.dao.impl;
 
+import com.sainnt.server.dao.DaoException;
 import com.sainnt.server.dao.UserRepository;
+import com.sainnt.server.entity.Directory;
 import com.sainnt.server.entity.User;
 import com.sainnt.server.util.HibernateUtil;
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
+import org.springframework.stereotype.Repository;
 
-
+import java.util.Optional;
+import java.util.Set;
+@Repository
 public class UserRepositoryImpl implements UserRepository {
-
-
+    @Override
+    public void registerUser(User user) throws DaoException {
+        try{
+            Session session = HibernateUtil.getCurrentSession();
+            Transaction transaction = session.beginTransaction();
+            session.save(user);
+            Directory rootDir = session.get(Directory.class,1);
+            Directory userDir = new Directory();
+            userDir.setName(user.getUsername());
+            userDir.setOwner(Set.of(user));
+            userDir.setParent(rootDir);
+            rootDir.getSubDirs().add(userDir);
+            session.save(userDir);
+            session.update(rootDir);
+            transaction.commit();
+        }catch (Exception exception)
+        {
+            throw new DaoException(exception);
+        }
+    }
 
     @Override
-    public User saveUser(User user) {
-        Session session = HibernateUtil.getSessionFactory().getCurrentSession();
-        Transaction transaction = session.beginTransaction();
+    public Optional<User> getUserById(long id) throws DaoException {
+        try {
+            Session session = HibernateUtil.getCurrentSession();
+            Transaction transaction = session.beginTransaction();
+            Optional<User> user = Optional.ofNullable( session.get(User.class, id));
+            transaction.commit();
+            return user;
+        }catch (Exception exception)
+        {
+            throw new DaoException(exception);
+        }
+    }
+
+    @Override
+    public Optional<User> getUserByUsername(String username) throws DaoException {
+        try{Session session = HibernateUtil.getCurrentSession();
+            Transaction transaction = session.beginTransaction();
+            Query<User> query = session.createQuery(" from User where username = :usernameParam ", User.class);
+            query.setParameter("usernameParam",username);
+            Optional<User> result = Optional.ofNullable(query.uniqueResult());
+            transaction.commit();
+            return result;
+        }catch (Exception exception){
+            throw new DaoException(exception);
+        }
+    }
+
+    @Override
+    public boolean usernameExists(String username) throws DaoException {
         try{
-            session.save(user);
+            Session session = HibernateUtil.getCurrentSession();
+            Transaction transaction = session.beginTransaction();
+            Query<User> query = session.createQuery(" from User where username = :usernameParam ", User.class);
+            query.setParameter("usernameParam",username);
+            boolean found = query.uniqueResult() != null;
+            transaction.commit();
+            return found;
         }
         catch (Exception exception)
         {
-            exception.printStackTrace();
-            transaction.rollback();
-            return null;
+            throw new DaoException(exception);
         }
-        transaction.commit();
-        return user;
     }
 
     @Override
-    public User getUserById(long id) {
-        Session session =  HibernateUtil.getSessionFactory().getCurrentSession();
-        Transaction transaction = session.beginTransaction();
-        User user = session.get(User.class, id);
-        transaction.commit();
-        return user;
-    }
-
-    @Override
-    public User getUserByUsername(String username) {
-        Session session =  HibernateUtil.getSessionFactory().getCurrentSession();
-        Transaction transaction = session.beginTransaction();
-        User user = loadUserByUsername(session,username);
-        transaction.commit();
-        return user;
-    }
-
-    @Override
-    public User getUserAndFetchCredentials(String username) {
-        Session session =  HibernateUtil.getSessionFactory().getCurrentSession();
-        Transaction transaction = session.beginTransaction();
-        User user = loadUserByUsername(session,username);
-        if(user  == null)
-        {
+    public boolean emailExists(String email) throws DaoException {
+        try{
+            Session session = HibernateUtil.getCurrentSession();
+            Transaction transaction = session.beginTransaction();
+            Query<User> query = session.createQuery(" from User where email = :emailParam ", User.class);
+            query.setParameter("emailParam",email);
+            boolean found = query.uniqueResult() != null;
             transaction.commit();
-            return null;
+            return found;
         }
-        Hibernate.initialize(user.getCredentials());
-        transaction.commit();
-        return user;
+        catch (Exception exception)
+        {
+            throw new DaoException(exception);
+        }
     }
-
-    @Override
-    public boolean usernameExists(String username) {
-        Session session = HibernateUtil.getSessionFactory().getCurrentSession();
-        Transaction transaction = session.beginTransaction();
-        Query<User> query = session.createQuery("from User where username =: usernameParam", User.class);
-        query.setMaxResults(1);
-        query.setParameter("usernameParam",username);
-        boolean objectFound = query.uniqueResult() != null;
-        transaction.commit();
-        return objectFound;
-    }
-
-
-    @Override
-    public boolean emailExists(String email) {
-        Session session = HibernateUtil.getSessionFactory().getCurrentSession();
-        Transaction transaction = session.beginTransaction();
-        Query<User> query = session.createQuery("from User where email=: emailParam", User.class);
-        query.setMaxResults(1);
-        query.setParameter("emailParam",email);
-        boolean objectFound = query.uniqueResult() != null;
-        transaction.commit();
-        return objectFound;
-    }
-    private User loadUserByUsername(Session session, String username){
-        Query<User> query = session.createQuery("from User where username =: usernameParam",User.class);
-        query.setMaxResults(1);
-        query.setParameter("usernameParam",username);
-        return query.uniqueResult();
-    }
-
 }
