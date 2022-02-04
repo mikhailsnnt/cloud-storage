@@ -3,8 +3,10 @@ package com.sainnt.server.pipebuilder.impl;
 import com.sainnt.server.entity.User;
 import com.sainnt.server.handler.ExceptionHandler;
 import com.sainnt.server.handler.OperationDecoder;
-import com.sainnt.server.handler.req_handler.CreateFolderRequestHandler;
-import com.sainnt.server.handler.req_handler.UploadFileRequestHandler;
+import com.sainnt.server.handler.req_handler.*;
+import com.sainnt.server.handler.resp_handler.DownloadOperationResponseHandler;
+import com.sainnt.server.handler.resp_handler.FileDtoResponseEncoder;
+import com.sainnt.server.handler.resp_handler.FilesListResponseHandler;
 import com.sainnt.server.pipebuilder.PipeLineBuilder;
 import com.sainnt.server.service.AuthenticationService;
 import com.sainnt.server.service.FileOperationsService;
@@ -27,12 +29,16 @@ public class PipeLineBuilderImpl implements PipeLineBuilder {
 
     @Override
     public void buildUserPipeLine(ChannelPipeline pipeline, User user) {
-
         OperationDecoder operationDecoder = new OperationDecoder(user, authService);
         pipeline.addLast(operationDecoder);
         pipeline.addLast(new CreateFolderRequestHandler(navigationService));
         pipeline.addLast(new UploadFileRequestHandler(fileService,operationDecoder));
-
+        pipeline.addLast(new DeleteFileRequestHandler(navigationService));
+        pipeline.addLast(new FileDtoResponseEncoder());
+        pipeline.addLast(new FilesListResponseHandler());
+        pipeline.addLast(new FilesListRequestHandler(fileService));
+        pipeline.addLast(new DownloadOperationResponseHandler());
+        pipeline.addLast(new DownloadFileRequestHandler(fileService));
         pipeline.addLast(new ExceptionHandler());
     }
 }

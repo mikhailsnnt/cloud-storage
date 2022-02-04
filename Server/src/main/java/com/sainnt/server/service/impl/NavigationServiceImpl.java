@@ -12,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 @Service
@@ -54,8 +57,6 @@ public class NavigationServiceImpl implements NavigationService {
     @Override
     public Directory createDirectory(String path, User user) {
         String parentDirectory = getParentDirectory(path);
-        if(parentDirectory == null) //Bad format
-            throw new AccessDeniedException(user.getUsername(),"/");
         String dirName = getFilename(path);
         if(invalidDirectoryName(dirName))
             throw new InvalidFileNameException(dirName);
@@ -129,8 +130,6 @@ public class NavigationServiceImpl implements NavigationService {
     @Override
     public File createFile(String path, User user) {
         String parentDirectory = getParentDirectory(path);
-        if(parentDirectory == null) //Bad format
-            throw new AccessDeniedException(user.getUsername(),"/");
         String fileName = getFilename(path);
         if(invalidFilename(fileName))
             throw new InvalidFileNameException(fileName);
@@ -156,11 +155,17 @@ public class NavigationServiceImpl implements NavigationService {
     @Override
     public void deleteFile(String path, User user) {
         try {
-            fileRepository.deleteFile(getFileByPath(path, user));
+            File file = getFileByPath(path, user);
+            fileRepository.deleteFile(file);
+            Files.deleteIfExists(Path.of("files/" + file.getId()));
         }
         catch (DaoException exception){
             log.error("Deleting file entity exception",exception);
             throw  new InternalServerError();
+        }
+        catch (IOException exception){
+            log.info("Deleting file  exception",exception);
+            throw new InternalServerError();
         }
     }
 
@@ -222,7 +227,7 @@ public class NavigationServiceImpl implements NavigationService {
     private String getParentDirectory(String path){
         int endIndex = path.lastIndexOf('/');
         if (endIndex == -1)
-            return null;
+            return "";
         return path.substring(0, endIndex);
     }
     private boolean invalidDirectoryName(String dirName){

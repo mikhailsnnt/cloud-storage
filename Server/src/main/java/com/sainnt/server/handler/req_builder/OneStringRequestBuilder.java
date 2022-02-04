@@ -1,6 +1,5 @@
 package com.sainnt.server.handler.req_builder;
 
-import com.sainnt.server.dto.request.CreateDirectoryRequest;
 import com.sainnt.server.dto.request.Request;
 import com.sainnt.server.handler.CommonReadWriteOperations;
 import com.sainnt.server.handler.RequestBuilder;
@@ -8,42 +7,39 @@ import com.sainnt.server.util.InteractionCodes;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 
-import java.nio.charset.StandardCharsets;
 
-
-public class CreateFolderRequestBuilder implements RequestBuilder {
+public abstract class OneStringRequestBuilder implements RequestBuilder {
     private enum  state{
-        readPathSize,
-        readPath,
+        readStringSize,
+        readString,
         completed
     }
-    private CreateDirectoryRequest request;
+    private Request request;
     private final ByteBuf buf;
     private state currentState;
     private int pathSize = -1;
 
-    public CreateFolderRequestBuilder() {
+    public OneStringRequestBuilder() {
         buf = PooledByteBufAllocator.DEFAULT.buffer(InteractionCodes.HEADER_SIZE);
-        currentState = state.readPathSize;
+        currentState = state.readStringSize;
     }
 
     @Override
     public boolean addBytesFromByteBuf(ByteBuf in) {
         switch (currentState)
         {
-            case readPathSize:
+            case readStringSize:
                 pathSize = CommonReadWriteOperations.readIntHeader(in,buf);
-                if(pathSize!=-1)
-                {
-                    CommonReadWriteOperations.ensureCapacity(buf,pathSize);
-                    currentState = state.readPath;
-                }
-            case readPath:
+                if(pathSize==-1)
+                    break;
+                CommonReadWriteOperations.ensureCapacity(buf,pathSize);
+                currentState = state.readString;
+
+            case readString:
                 String s = CommonReadWriteOperations.readString(in,pathSize,buf);
                 if(s != null)
                 {
-                    request = new CreateDirectoryRequest();
-                    request.setPath(buf.readCharSequence(pathSize, StandardCharsets.UTF_8).toString());
+                    request = formRequest(s);
                     buf.release();
                     currentState = state.completed;
                     return true;
@@ -51,6 +47,9 @@ public class CreateFolderRequestBuilder implements RequestBuilder {
         }
         return false;
     }
+
+    protected abstract Request  formRequest(String str);
+
 
     @Override
     public Request getResultRequest() {

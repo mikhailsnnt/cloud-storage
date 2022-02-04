@@ -42,9 +42,14 @@ public class CommonReadWriteOperations {
         return header;
     }
 
+
     public static void sendIntCodeResponse(ChannelHandlerContext ctx, int code) {
-        ctx.write(ctx.alloc().buffer(InteractionCodes.HEADER_SIZE).writeInt(code));
-        ctx.flush();
+        ctx.writeAndFlush(ctx.alloc().buffer(InteractionCodes.HEADER_SIZE).writeInt(code));
+
+    }
+
+    public static void sendLong(ChannelHandlerContext ctx, long val){
+        ctx.writeAndFlush(ctx.alloc().buffer(8).writeLong(val));
     }
 
     public static void ensureCapacity(ByteBuf buf, int size){

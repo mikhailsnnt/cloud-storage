@@ -18,7 +18,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 @Slf4j
-public class FileUploadOperation implements ByteTransferringOperation {
+public class FileUploadOperation implements ByteUploadOperation {
     private BufferedOutputStream writeStream;
     private final File file;
     private final MessageDigest md;

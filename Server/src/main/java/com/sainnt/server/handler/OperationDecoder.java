@@ -3,7 +3,7 @@ package com.sainnt.server.handler;
 import com.sainnt.server.dto.request.Request;
 import com.sainnt.server.entity.User;
 import com.sainnt.server.service.AuthenticationService;
-import com.sainnt.server.service.operations.ByteTransferringOperation;
+import com.sainnt.server.service.operations.ByteUploadOperation;
 import com.sainnt.server.util.InteractionCodes;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -23,7 +23,7 @@ public class OperationDecoder extends ByteToMessageDecoder {
         this.authService = authService;
     }
 
-    private ByteTransferringOperation transferringOperation;
+    private ByteUploadOperation transferringOperation;
     private RequestBuilder requestBuilder;
 
     @Override
@@ -79,7 +79,7 @@ public class OperationDecoder extends ByteToMessageDecoder {
         }
     }
 
-    public void setTransferringOperation(ByteTransferringOperation transferringOperation) {
+    public void setTransferringOperation(ByteUploadOperation transferringOperation) {
         this.transferringOperation = transferringOperation;
     }
 }

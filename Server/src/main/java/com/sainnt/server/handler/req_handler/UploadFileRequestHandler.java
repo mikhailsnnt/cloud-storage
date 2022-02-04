@@ -4,7 +4,7 @@ import com.sainnt.server.dto.request.UploadFileRequest;
 import com.sainnt.server.handler.CommonReadWriteOperations;
 import com.sainnt.server.handler.OperationDecoder;
 import com.sainnt.server.service.FileOperationsService;
-import com.sainnt.server.service.operations.FileUploadOperation;
+import com.sainnt.server.service.operations.ByteUploadOperation;
 import com.sainnt.server.util.InteractionCodes;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -19,7 +19,7 @@ public class UploadFileRequestHandler extends SimpleChannelInboundHandler<Upload
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, UploadFileRequest uploadFileRequest) {
-        FileUploadOperation fileUploadOperation = service.uploadFile(uploadFileRequest);
+        ByteUploadOperation fileUploadOperation = service.uploadFile(uploadFileRequest);
         decoder.setTransferringOperation(fileUploadOperation);
         CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_START_UPLOAD);
     }

@@ -5,8 +5,7 @@ import com.sainnt.server.dto.RegistrationResult;
 import com.sainnt.server.exception.*;
 import com.sainnt.server.exception.ClientAvailableException;
 import com.sainnt.server.handler.RequestBuilder;
-import com.sainnt.server.handler.req_builder.CreateFolderRequestBuilder;
-import com.sainnt.server.handler.req_builder.UploadFileRequestBuilder;
+import com.sainnt.server.handler.req_builder.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +21,9 @@ public class InteractionCodes {
     public static final int CODE_UPLOADED_SUCCESSFULLY =9;
     public static final int CODE_OP_CREATED_DIR=110;
     public static final int CODE_OP_UPLOADED_FILE=111;
+    public static final int CODE_OP_DELETED_FILE=112;
+    public static final int CODE_OP_LIST_FILES=113;
+    public static final int CODE_OP_START_DOWNLOAD = 114;
 
     private static final Map<Integer, Class<? extends RequestBuilder>> REQUEST_CODES;
     private static final Map<Class<? extends ClientAvailableException>, Integer>  EXCEPTION_CODES;
@@ -29,8 +31,11 @@ public class InteractionCodes {
     private static final Map<LoginResult.Result, Integer> LOGIN_RESULT_CODES;
     static {
         REQUEST_CODES = new HashMap<>();
-        REQUEST_CODES.put(20, CreateFolderRequestBuilder.class);
+        REQUEST_CODES.put(20, CreateDirectoryRequestBuilder.class);
         REQUEST_CODES.put(21, UploadFileRequestBuilder.class);
+        REQUEST_CODES.put(22, DeleteFileRequestBuilder.class);
+        REQUEST_CODES.put(23, FilesListRequestBuilder.class);
+        REQUEST_CODES.put(24, DownloadFileRequestBuilder.class);
 
         REGISTRATION_RESULT_CODES = new HashMap<>();
         REGISTRATION_RESULT_CODES.put(RegistrationResult.success,50);
