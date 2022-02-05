@@ -41,19 +41,26 @@ public class OperationDecoder extends ByteToMessageDecoder {
         if(byteBuf.readableBytes()<InteractionCodes.HEADER_SIZE)
             return;
         int operationCode = byteBuf.readInt();
-
-            Optional<Class<? extends RequestBuilder>> requestBuilderClass = InteractionCodes.getRequestBuilderClass(operationCode);
-            if(requestBuilderClass.isPresent())
-            {
-                try {
-                    requestBuilder = requestBuilderClass.get().getDeclaredConstructor().newInstance();
-                }
-                catch (Exception exception){
-                    log.error("Request builder creating error",exception);
-                }
+        if (operationCode == InteractionCodes.CODE_EXIT)
+        {
+            try {
+                channelHandlerContext.close().sync();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            else
-                CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_INVALID_REQUEST);
+        }
+        Optional<Class<? extends RequestBuilder>> requestBuilderClass = InteractionCodes.getRequestBuilderClass(operationCode);
+        if(requestBuilderClass.isPresent())
+        {
+            try {
+                requestBuilder = requestBuilderClass.get().getDeclaredConstructor().newInstance();
+            }
+            catch (Exception exception){
+                log.error("Request builder creating error",exception);
+            }
+        }
+        else
+            CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_INVALID_REQUEST);
 
 
 

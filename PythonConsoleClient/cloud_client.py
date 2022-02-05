@@ -175,6 +175,9 @@ def main_loop():
                 print("Format: download -remote_path local_path")
                 continue
             download_file(t[1], t[2])
+        elif inp == "quit":
+            send_int_header(3)
+            break
 
 
 def delete_remote_file(path):
@@ -222,7 +225,7 @@ def list_remote_files(path):
 
 def download_file(remote_path, local_path):
     if os.path.exists(local_path):
-        print("File %s exists"%local_path)
+        print("File %s exists" % local_path)
         return
     send_int_header(24)
     send_str_with_header(remote_path)

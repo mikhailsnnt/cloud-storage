@@ -14,6 +14,7 @@ import java.util.Optional;
 public class InteractionCodes {
     private InteractionCodes(){}
     public static final int HEADER_SIZE = 4;
+    public static final int CODE_EXIT = 3;
     public static final int CODE_LOGIN = 5;
     public static final int CODE_REGISTER = 6;
     public static final int CODE_INVALID_REQUEST=7;
