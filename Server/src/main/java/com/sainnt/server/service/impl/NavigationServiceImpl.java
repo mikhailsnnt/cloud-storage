@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -140,7 +141,8 @@ public class NavigationServiceImpl implements NavigationService {
         file.setName(fileName);
         file.setOwner(user);
         file.setParentDirectory(dir);
-        dir.getFiles().add(file);
+        Set<File> files = dir.getFiles();
+        files.add(file);
         try {
             fileRepository.saveFile(file);
         }catch (DaoException e){

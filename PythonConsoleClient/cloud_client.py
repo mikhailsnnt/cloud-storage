@@ -103,7 +103,7 @@ def send_file(path):
 
 
 def read_int(size=4):
-    return int.from_bytes(sock.recv(size),byteorder='big')
+    return int.from_bytes(sock.recv(size), byteorder='big')
 
 
 def read_str_with_header():
@@ -113,7 +113,7 @@ def read_str_with_header():
 
 def read_response_code():
     try:
-        code = int.from_bytes(sock.recv(4), byteorder='big')
+        code = read_int()
         if code >= 200:
             print("Exception message:", read_str_with_header() )
         return code
@@ -250,12 +250,7 @@ def download_file(remote_path, local_path):
             progress.update(len(recv))
             progress.refresh()
         progress.close()
-        hs_size = read_int()
-        hs = sock.recv(hs_size)
-        if hs == md5_hash.digest():
-            print("File downloaded successfully")
-        else:
-            print("Hash mismatch")
+    print("File downloaded successfully")
 
 
 FILE_BUF_SIZE = 4096
