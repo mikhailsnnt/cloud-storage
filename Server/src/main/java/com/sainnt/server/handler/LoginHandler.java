@@ -87,17 +87,21 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
 
 
             case readEmailSize:
-                emailSize = CommonReadWriteOperations.readIntHeader(in,headerBuffer);
-                if(emailSize==-1)
-                    return;
-                CommonReadWriteOperations.ensureCapacity(contentBuffer,emailSize);
-                currentState = authState.readEmail;
+                if(isRegistering){
+                    emailSize = CommonReadWriteOperations.readIntHeader(in,headerBuffer);
+                     if(emailSize==-1)
+                        return;
+                    CommonReadWriteOperations.ensureCapacity(contentBuffer,emailSize);
+                    currentState = authState.readEmail;
+                }
 
             case readEmail:
-                email = CommonReadWriteOperations.readString(in,emailSize, contentBuffer);
-                if(email==null)
-                    return;
-                currentState = authState.readPasswordSize;
+                if (isRegistering){
+                    email = CommonReadWriteOperations.readString(in,emailSize, contentBuffer);
+                    if(email==null)
+                         return;
+                    currentState = authState.readPasswordSize;
+                }
 
             case readPasswordSize:
                 passwordSize = CommonReadWriteOperations.readIntHeader(in,headerBuffer);
