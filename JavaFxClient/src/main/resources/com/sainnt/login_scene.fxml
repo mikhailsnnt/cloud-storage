@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<?import javafx.scene.layout.StackPane?>
+<StackPane fx:id="rootPane" fx:controller="com.sainnt.controller.LoginPageController" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <TabPane fx:id="tabPane"  maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="256.0" prefWidth="357.0" tabClosingPolicy="UNAVAILABLE" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17">
+
+            <tabs>
+                <Tab text="Sign in">
+                    <content>
+
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                            <children>
+                                <Button fx:id="signInButton" onAction="#signIn" layoutX="119.0" layoutY="141.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="120.0" text="Sign in" />
+                                <TextField fx:id="signInLoginTextField" layoutX="70.0" layoutY="47.0" prefHeight="35.0" prefWidth="218.0" promptText="Login" />
+                                <PasswordField fx:id="signInPasswordField" layoutX="70.0" layoutY="97.0" prefHeight="32.0" prefWidth="218.0" promptText="Password" />
+                            </children>
+                        </AnchorPane>
+                    </content>
+                </Tab>
+                <Tab text="Register">
+                    <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                            <children>
+                                <TextField fx:id="signUpLoginTextField"  layoutX="70.0" layoutY="26.0" prefHeight="35.0" prefWidth="218.0" promptText="Login" />
+                                <TextField fx:id="signUpEmailTextField" layoutX="70.0" layoutY="78.0" prefHeight="35.0" prefWidth="219.0" promptText="Email" />
+                                <PasswordField fx:id="signUpPasswordField" layoutX="71.0" layoutY="127.0" prefHeight="32.0" prefWidth="218.0" promptText="Password" />
+                                <Button  fx:id="signUpButton" onAction="#signUp" layoutX="151.0" layoutY="175.0" mnemonicParsing="false" text="Sign up" />
+                            </children></AnchorPane>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </children>
+</StackPane>
