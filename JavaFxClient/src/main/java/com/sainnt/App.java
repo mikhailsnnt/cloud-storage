@@ -1,10 +1,14 @@
 package com.sainnt;
 
+import com.sainnt.controller.LoginPageController;
 import com.sainnt.files.RemoteFileRepresentation;
+import com.sainnt.net.CloudClient;
 import com.sainnt.views.LocalFilesView;
 import com.sainnt.views.treeview.FilesView;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -23,19 +27,34 @@ import java.io.IOException;
  * JavaFX App
  */
 public class App extends Application {
-
-
     private LocalFilesView localFilesView;
     private FilesView remoteFilesView;
+    private Stage stage;
     @Override
     public void start(Stage stage)  {
+        this.stage = stage;
+        CloudClient.getClient();
         localFilesView = new LocalFilesView();
         remoteFilesView  = new FilesView();
         remoteFilesView.setRoot(new RemoteFileRepresentation("/","",true));
-        initializeMainScene(stage);
+        initializeLoginScene();
+
     }
 
-    public void initializeMainScene(Stage stage){
+    public void initializeLoginScene(){
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("login_scene.fxml"));
+        try {
+            Scene scene = new Scene(fxmlLoader.load());
+            ((LoginPageController)fxmlLoader.getController()).setOnLoggedIn(this::initializeMainScene);
+            stage.setTitle("Log in or sign up");
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void initializeMainScene(){
         //Initialising file views
         AnchorPane localSide = getColoredPaneWithView(this.localFilesView, "#FFFAF0");
         AnchorPane remoteSide = getColoredPaneWithView(this.remoteFilesView, "#E0FFFF");
@@ -63,8 +82,11 @@ public class App extends Application {
 
         VBox viewBox = new VBox(menuBar, splitPane);
         Scene scene = new Scene(viewBox, 900, 600);
+        stage.setTitle("Cloud-storage");
         stage.setScene(scene);
         stage.show();
+
+
     }
 
     private AnchorPane getColoredPaneWithView(Node node, String color) {
