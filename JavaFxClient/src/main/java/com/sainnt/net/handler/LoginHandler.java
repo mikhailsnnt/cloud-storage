@@ -31,8 +31,9 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
         if(buf==null)
             buf = ctx.alloc().buffer(4);
         ByteBuf in = (ByteBuf) msg;
-        if(in.readableBytes()>0)
-            buf.writeBytes(in, Math.min(in.readableBytes(),4- buf.readableBytes() ));
+        if(in.readableBytes()<=0)
+            return;
+        buf.writeBytes(in, Math.min(in.readableBytes(),4- buf.readableBytes() ));
         int code = buf.readInt();
         log.debug("Login handler received code {}",code);
         switch (code){
@@ -74,7 +75,7 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void removeLoginController(ChannelHandlerContext ctx){
-        ctx.pipeline().remove(this);
         ctx.pipeline().addLast(new OperationHandler());
+        ctx.pipeline().remove(this);
     }
 }

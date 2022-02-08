@@ -2,6 +2,7 @@ package com.sainnt.net;
 
 import com.sainnt.dto.SignInResult;
 import com.sainnt.dto.SignUpResult;
+import com.sainnt.files.FileRepresentation;
 import com.sainnt.net.handler.LoginHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -9,16 +10,21 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 @Slf4j
 public class CloudClient {
+    private final HashMap<String,ObservableList<FileRepresentation>> listFilesRequests = new HashMap<>();
     private boolean connected = false;
     private static CloudClient client;
 
@@ -52,7 +58,7 @@ public class CloudClient {
                     @Override
                     public void initChannel(SocketChannel ch) {
 //                        handler = new OperationHandler();
-                        ch.pipeline().addLast(new ChannelInboundHandlerAdapter());
+//                        ch.pipeline().addLast(new ChannelInboundHandlerAdapter());
 
                     }
                 });
@@ -78,6 +84,7 @@ public class CloudClient {
             }
         };
         Thread thread = new Thread(connectTask);
+        thread.setDaemon(false);
         thread.start();
     }
 
@@ -105,7 +112,9 @@ public class CloudClient {
                 connected = false;
             }
         };
-        new Thread(task).start();
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
     public void register(String login, String email, String password){
         if(!connected)
@@ -134,9 +143,10 @@ public class CloudClient {
                 connected = false;
             }
         };
-        new Thread(task).start();
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
-
     public void initLoginHandler(Consumer<SignInResult> signInResultConsumer, Consumer<SignUpResult> signUpResultConsumer ){
         if(!connected) {
             try {
@@ -146,5 +156,32 @@ public class CloudClient {
             }
         }
         channel.pipeline().addLast(new LoginHandler(signInResultConsumer, signUpResultConsumer));
+    }
+
+    public void requestChildrenFiles(String path, ObservableList<FileRepresentation> children) {
+        if(!connected)
+        {
+            log.info("Files list request denied, not connected to server");
+            return;
+        }
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                ByteBuf buf =  channel.alloc().buffer(8+path.length());
+                buf.writeInt(23);
+                buf.writeInt(path.length());
+                buf.writeBytes(path.getBytes(StandardCharsets.UTF_8));
+                channel.writeAndFlush(buf).sync();
+                return null;
+            }
+        };
+        listFilesRequests.put(path,children);
+        Thread thread = new Thread(task);
+        thread.start();
+    }
+    public void handleFilesRequest(String path, Collection<FileRepresentation> files){
+        ObservableList<FileRepresentation> filesDestination  = listFilesRequests.get(path);
+        filesDestination.clear();
+        filesDestination.addAll(files);
     }
 }

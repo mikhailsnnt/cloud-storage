@@ -56,6 +56,7 @@ public class FileOperationsServiceImpl implements FileOperationsService {
         Set<Directory> subDirs = dir.getSubDirs();
         if (subDirs!=null)
             subDirs.stream()
+                    .filter(t->t.getOwner().contains(request.getUser()))
                 .map(t->new FileDto(t.getName(),true,0,true))
                 .forEach(list::add);
         Set<File> files = dir.getFiles();

@@ -39,6 +39,12 @@ public class NavigationServiceImpl implements NavigationService {
             throw  new InternalServerError();
         }
         boolean userAuthorized = curDir.getOwner().contains(user);
+        if(path.isEmpty())
+        {
+            if(!userAuthorized)
+                throw new AccessDeniedException(user.getUsername(),path);
+            return curDir;
+        }
         for (String dirName : path.split("/"))
         {
             curDir = curDir

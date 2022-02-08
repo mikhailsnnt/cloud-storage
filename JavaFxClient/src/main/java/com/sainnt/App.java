@@ -4,6 +4,7 @@ import com.sainnt.controller.LoginPageController;
 import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.CloudClient;
 import com.sainnt.views.LocalFilesView;
+import com.sainnt.views.RemoteFilesView;
 import com.sainnt.views.treeview.FilesView;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -12,8 +13,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.Dragboard;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Priority;
@@ -27,16 +26,11 @@ import java.io.IOException;
  * JavaFX App
  */
 public class App extends Application {
-    private LocalFilesView localFilesView;
-    private FilesView remoteFilesView;
     private Stage stage;
     @Override
     public void start(Stage stage)  {
         this.stage = stage;
         CloudClient.getClient();
-        localFilesView = new LocalFilesView();
-        remoteFilesView  = new FilesView();
-        remoteFilesView.setRoot(new RemoteFileRepresentation("/","",true));
         initializeLoginScene();
 
     }
@@ -56,8 +50,11 @@ public class App extends Application {
 
     public void initializeMainScene(){
         //Initialising file views
-        AnchorPane localSide = getColoredPaneWithView(this.localFilesView, "#FFFAF0");
-        AnchorPane remoteSide = getColoredPaneWithView(this.remoteFilesView, "#E0FFFF");
+        LocalFilesView localFilesView = new LocalFilesView();
+        RemoteFilesView remoteFilesView = new RemoteFilesView();
+        remoteFilesView.setRoot(new RemoteFileRepresentation("","",true));
+        AnchorPane localSide = getColoredPaneWithView(localFilesView, "#FFFAF0");
+        AnchorPane remoteSide = getColoredPaneWithView(remoteFilesView, "#E0FFFF");
         SplitPane splitPane = new SplitPane(localSide,remoteSide);
         splitPane.setStyle("-fx-focus-color:transparent");
         splitPane.setDividerPosition(1,0.5);

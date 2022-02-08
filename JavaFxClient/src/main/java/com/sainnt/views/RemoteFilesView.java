@@ -1,4 +1,9 @@
 package com.sainnt.views;
 
-public class RemoteFilesView{
+import com.sainnt.views.treeview.FilesView;
+
+public class RemoteFilesView extends FilesView {
+    public RemoteFilesView() {
+        setShowRoot(false);
+    }
 }

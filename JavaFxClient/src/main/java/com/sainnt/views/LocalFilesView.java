@@ -24,6 +24,7 @@ public class LocalFilesView extends FilesView {
         setRoot(rootDir);
         //Expanding path to home directory
         getRoot().setExpanded(true);
+        getRoot().getValue().loadContent();
         int nameCount = path.getNameCount();
         TreeItem<FileRepresentation> current =  getRoot();
         for (int i = 0; i < nameCount; i++) {
@@ -35,6 +36,7 @@ public class LocalFilesView extends FilesView {
                     .findFirst()
                     .orElseThrow(()->new RuntimeException("Path error"));
             current.setExpanded(true);
+            current.getValue().loadContent();
         }
         getSelectionModel().select(current);
     }
