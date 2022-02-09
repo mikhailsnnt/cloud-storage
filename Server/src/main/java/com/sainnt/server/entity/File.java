@@ -26,8 +26,9 @@ public class File {
     @JoinColumn(name = "owner_id",referencedColumnName = "id")
     private User owner;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dir_id",referencedColumnName = "id")
+    @ToString.Exclude
     private Directory parentDirectory;
 
 
