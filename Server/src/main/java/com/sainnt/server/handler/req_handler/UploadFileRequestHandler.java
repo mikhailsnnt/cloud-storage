@@ -12,15 +12,16 @@ import io.netty.channel.SimpleChannelInboundHandler;
 public class UploadFileRequestHandler extends SimpleChannelInboundHandler<UploadFileRequest> {
     private final FileOperationsService service;
     private final OperationDecoder decoder;
+
     public UploadFileRequestHandler(FileOperationsService service, OperationDecoder decoder) {
         this.service = service;
         this.decoder = decoder;
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, UploadFileRequest uploadFileRequest) {
+    protected void channelRead0(ChannelHandlerContext ctx, UploadFileRequest uploadFileRequest) {
         ByteUploadOperation fileUploadOperation = service.uploadFile(uploadFileRequest);
         decoder.setTransferringOperation(fileUploadOperation);
-        CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_START_UPLOAD);
+        CommonReadWriteOperations.sendStringWithHeader(ctx, InteractionCodes.CODE_START_UPLOAD, uploadFileRequest.getPath());
     }
 }

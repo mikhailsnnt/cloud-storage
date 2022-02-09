@@ -9,5 +9,5 @@ import lombok.EqualsAndHashCode;
 public class UploadFileRequest extends Request {
     private String path;
     private long fileSize;
-    private byte[] checkSum;
+//    private byte[] checkSum;
 }

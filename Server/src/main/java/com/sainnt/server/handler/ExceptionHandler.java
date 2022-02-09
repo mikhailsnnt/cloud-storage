@@ -12,12 +12,12 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 
-        if(cause instanceof ClientAvailableException ex){
-            CommonReadWriteOperations.sendIntCodeResponse(ctx, InteractionCodes.getExceptionCode(ex.getClass()) );
-            CommonReadWriteOperations.sendStringWithHeader(ctx, ex.getMessage());
-        }
-        else
-            CommonReadWriteOperations.sendIntCodeResponse(ctx,InteractionCodes.getExceptionCode(InternalServerError.class));
-        log.info("Exception handler exception",cause);
+        if (cause instanceof ClientAvailableException ex) {
+            CommonReadWriteOperations.sendStringWithHeader(ctx,
+                    InteractionCodes.getExceptionCode(ex.getClass()),
+                    ex.getMessage());
+        } else
+            CommonReadWriteOperations.sendIntCodeResponse(ctx, InteractionCodes.getExceptionCode(InternalServerError.class));
+        log.info("Exception handler exception", cause);
     }
 }

@@ -27,6 +27,7 @@ import java.util.Set;
 public class FileOperationsServiceImpl implements FileOperationsService {
     private final FileRepository repository;
     private final NavigationService navigationService;
+
     public FileOperationsServiceImpl(FileRepository repository, NavigationService navigationService) {
         this.repository = repository;
         this.navigationService = navigationService;
@@ -34,36 +35,36 @@ public class FileOperationsServiceImpl implements FileOperationsService {
 
     @Override
     public ByteUploadOperation uploadFile(UploadFileRequest request) {
-        File file = navigationService.createFile(request.getPath(),request.getUser());
+        File file = navigationService.createFile(request.getPath(), request.getUser());
         file.setSize(request.getFileSize());
-        try{
+        try {
             repository.updateFile(file);
-        }catch (DaoException e){
-            log.error("Error updating filesize during upload operation",e);
+        } catch (DaoException e) {
+            log.error("Error updating filesize during upload operation", e);
         }
-        return new FileUploadOperation(file,request.getCheckSum(),repository);
+        return new FileUploadOperation(file, repository);
     }
 
     @Override
     public ByteDownloadOperation downloadFile(DownloadFileRequest request) {
-        return new FileDownloadOperation(navigationService.getFileByPath(request.getPath(),request.getUser()));
+        return new FileDownloadOperation(navigationService.getFileByPath(request.getPath(), request.getUser()));
     }
 
     @Override
     public List<FileDto> getFiles(FilesListRequest request) {
-        Directory dir = navigationService.findDirectoryByPath(request.getPath(),request.getUser());
+        Directory dir = navigationService.findDirectoryByPath(request.getPath(), request.getUser());
         List<FileDto> list = new ArrayList<>();
         Set<Directory> subDirs = dir.getSubDirs();
-        if (subDirs!=null)
+        if (subDirs != null)
             subDirs.stream()
-                    .filter(t->t.getOwner().contains(request.getUser()))
-                .map(t->new FileDto(t.getName(),true,0,true))
-                .forEach(list::add);
+                    .filter(t -> t.getOwner().contains(request.getUser()))
+                    .map(t -> new FileDto(t.getName(), true, 0, true))
+                    .forEach(list::add);
         Set<File> files = dir.getFiles();
-        if (files!=null) {
+        if (files != null) {
             files
                     .stream()
-                    .map(t->new FileDto(t.getName(),false,t.getSize(),t.isComplete()))
+                    .map(t -> new FileDto(t.getName(), false, t.getSize(), t.isComplete()))
                     .forEach(list::add);
         }
         return list;

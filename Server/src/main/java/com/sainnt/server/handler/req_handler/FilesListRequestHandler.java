@@ -18,10 +18,11 @@ public class FilesListRequestHandler extends SimpleChannelInboundHandler<FilesLi
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, FilesListRequest request) {
+    protected void channelRead0(ChannelHandlerContext ctx, FilesListRequest request) throws InterruptedException {
         List<FileDto> files = service.getFiles(request);
-        CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_OP_LIST_FILES);
-        CommonReadWriteOperations.sendStringWithHeader(channelHandlerContext,request.getPath());
-        channelHandlerContext.writeAndFlush(files);
+        CommonReadWriteOperations.sendStringWithHeader(ctx,
+                InteractionCodes.CODE_OP_LIST_FILES,
+                request.getPath()).sync();
+        ctx.writeAndFlush(files);
     }
 }

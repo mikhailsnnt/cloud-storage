@@ -10,8 +10,8 @@ import java.util.List;
 
 public class FilesListResponseHandler extends MessageToByteEncoder<List<FileDto>> {
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, List<FileDto> file, ByteBuf byteBuf)  {
-        CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext,file.size());
+    protected void encode(ChannelHandlerContext channelHandlerContext, List<FileDto> file, ByteBuf byteBuf) throws InterruptedException {
+        CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, file.size()).sync();
         file.forEach(channelHandlerContext::write);
     }
 }
