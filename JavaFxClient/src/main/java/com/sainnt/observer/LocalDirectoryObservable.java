@@ -10,10 +10,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-public class LocalDirectoryObservable extends DirectoryObservable{
+public class LocalDirectoryObservable extends DirectoryObservable {
 
-    //Singletone:
-    public static LocalDirectoryObservable getInstance(){
+    public static LocalDirectoryObservable getInstance() {
         return instance;
     }
 
@@ -36,7 +35,7 @@ public class LocalDirectoryObservable extends DirectoryObservable{
 
     private final WatchService watchService;
     private final HashSet<DirectoryObserver> observersToBeRemoved = new HashSet<>();
-    private final Map<WatchKey,DirectoryObserver> mapKeysToObservers = new HashMap<>();
+    private final Map<WatchKey, DirectoryObserver> mapKeysToObservers = new HashMap<>();
 
     @Override
     protected void startObserving(DirectoryObserver observer) {
@@ -50,7 +49,7 @@ public class LocalDirectoryObservable extends DirectoryObservable{
                             StandardWatchEventKinds.ENTRY_CREATE,
                             StandardWatchEventKinds.ENTRY_DELETE,
                             StandardWatchEventKinds.ENTRY_MODIFY);
-            mapKeysToObservers.put(key,observer);
+            mapKeysToObservers.put(key, observer);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -63,44 +62,43 @@ public class LocalDirectoryObservable extends DirectoryObservable{
     }
 
     @SneakyThrows
-    private void observeLoop(){
-        while(true){
+    private void observeLoop() {
+        while (true) {
             WatchKey key = watchService.take();
-            key.pollEvents().forEach(event -> processEvent(key,event));
-            if(!key.reset()) {
+            key.pollEvents().forEach(event -> processEvent(key, event));
+            if (!key.reset()) {
                 System.out.println("Key not valid " + key.watchable());
             }
-            if(keyIsRemoved(key))
+            if (keyIsRemoved(key))
                 key.cancel();
         }
     }
-    private void processEvent(WatchKey key ,WatchEvent<?> event){
+
+    private void processEvent(WatchKey key, WatchEvent<?> event) {
         DirectoryObserver observer = mapKeysToObservers.get(key);
-        LocalFileRepresentation repr = new LocalFileRepresentation(relativeToAbsolutePath(observer,(Path)event.context()));
-        if(event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE))
+        LocalFileRepresentation repr = new LocalFileRepresentation(relativeToAbsolutePath(observer, (Path) event.context()));
+        if (event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE))
             observer.fileAdded(repr);
-        else if(event.kind().equals(StandardWatchEventKinds.ENTRY_DELETE))
+        else if (event.kind().equals(StandardWatchEventKinds.ENTRY_DELETE))
             observer.fileRemoved(repr);
-        else if(event.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY))
+        else if (event.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY))
             observer.fileModified(repr);
     }
-    private Path relativeToAbsolutePath(DirectoryObserver observer, Path path){
+
+    private Path relativeToAbsolutePath(DirectoryObserver observer, Path path) {
         return observer.getDirectory().getFile().toPath().resolve(path);
     }
 
 
-    private boolean keyIsRemoved(WatchKey key){
+    private boolean keyIsRemoved(WatchKey key) {
         DirectoryObserver o = mapKeysToObservers.get(key);
-        if(observersToBeRemoved.contains(o))
-        {
+        if (observersToBeRemoved.contains(o)) {
             observersToBeRemoved.remove(o);
             mapKeysToObservers.remove(key);
             return true;
         }
-        return  false;
+        return false;
     }
-
-
 
 
 }

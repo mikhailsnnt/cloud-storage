@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 public class OperationHandler extends ByteToMessageDecoder {
     private final CloudClient client;
-    private  Consumer<ExceptionDto> exceptionInfoConsumer;
+    private Consumer<ExceptionDto> exceptionInfoConsumer;
 
     public void setExceptionDescriptionConsumer(Consumer<ExceptionDto> exceptionInfoConsumer) {
         this.exceptionInfoConsumer = exceptionInfoConsumer;
@@ -32,6 +32,7 @@ public class OperationHandler extends ByteToMessageDecoder {
 
     int operationCode = -1;
     private int exceptionCode = -1;
+
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
         if (operationCode == -1) {
@@ -69,76 +70,69 @@ public class OperationHandler extends ByteToMessageDecoder {
 
     private void handleFileUpload(ByteBuf byteBuf) {
         byteBuf.markReaderIndex();
-        if(byteBuf.readableBytes()<4)
-        {
+        if (byteBuf.readableBytes() < 4) {
             byteBuf.resetReaderIndex();
             return;
         }
         int pathSize = byteBuf.readInt();
-        if(byteBuf.readableBytes()<pathSize)
-        {
+        if (byteBuf.readableBytes() < pathSize) {
             byteBuf.resetReaderIndex();
             return;
         }
-        String path = byteBuf.readCharSequence(pathSize,StandardCharsets.UTF_8).toString();
+        String path = byteBuf.readCharSequence(pathSize, StandardCharsets.UTF_8).toString();
         client.handleFileUploadResponse(path);
         operationCode = -1;
     }
 
-    private void handleFilesListRequest(ByteBuf byteBuf){
+    private void handleFilesListRequest(ByteBuf byteBuf) {
         byteBuf.markReaderIndex();
-            if(byteBuf.readableBytes() <4){
+        if (byteBuf.readableBytes() < 4) {
+            byteBuf.resetReaderIndex();
+            return;
+        }
+        int pathSize = byteBuf.readInt();
+        if (byteBuf.readableBytes() < pathSize) {
+            byteBuf.resetReaderIndex();
+            return;
+        }
+        String path = byteBuf.readCharSequence(pathSize, StandardCharsets.UTF_8).toString();
+        if (byteBuf.readableBytes() < 4) {
+            byteBuf.resetReaderIndex();
+            return;
+        }
+        int filesCount = byteBuf.readInt();
+        List<FileRepresentation> ls = new ArrayList<>();
+        for (int i = 0; i < filesCount; i++) {
+            if (byteBuf.readableBytes() < 6) {
+                ls.clear();
                 byteBuf.resetReaderIndex();
                 return;
             }
-            int pathSize = byteBuf.readInt();
-            if(byteBuf.readableBytes() < pathSize)
-            {
+            boolean isDir = byteBuf.readBoolean();
+            boolean completed = byteBuf.readBoolean();
+            int nameSize = byteBuf.readInt();
+            if (byteBuf.readableBytes() < nameSize) {
+                ls.clear();
                 byteBuf.resetReaderIndex();
                 return;
             }
-            String path = byteBuf.readCharSequence(pathSize,StandardCharsets.UTF_8).toString();
-            if(byteBuf.readableBytes()<4)
-            {
-                byteBuf.resetReaderIndex();
-                return;
-            }
-            int filesCount = byteBuf.readInt();
-            List<FileRepresentation> ls = new ArrayList<>();
-            for (int i = 0; i < filesCount; i++) {
-                if(byteBuf.readableBytes()<6){
+            String filename = byteBuf.readCharSequence(nameSize, StandardCharsets.UTF_8).toString();
+            if (!isDir) {
+                if (byteBuf.readableBytes() < 8) {
                     ls.clear();
                     byteBuf.resetReaderIndex();
                     return;
                 }
-                boolean isDir = byteBuf.readBoolean();
-                boolean completed = byteBuf.readBoolean();
-                int nameSize = byteBuf.readInt();
-                if(byteBuf.readableBytes()<nameSize)
-                {
-                    ls.clear();
-                    byteBuf.resetReaderIndex();
-                    return;
-                }
-                String filename = byteBuf.readCharSequence(nameSize, StandardCharsets.UTF_8).toString();
-                if(!isDir){
-                    if(byteBuf.readableBytes()<8)
-                    {
-                        ls.clear();
-                        byteBuf.resetReaderIndex();
-                        return;
-                    }
-                    byteBuf.readLong();
-                    ls.add(new RemoteFileRepresentation(path, filename,
-                            false));
-                }
-                else
-                    ls.add(new RemoteFileRepresentation(path,
-                            filename,
-                            true
-                    ));
-            }
-            client.handleFilesRequest(path,ls);
-            operationCode = -1;
+                byteBuf.readLong();
+                ls.add(new RemoteFileRepresentation(path, filename,
+                        false));
+            } else
+                ls.add(new RemoteFileRepresentation(path,
+                        filename,
+                        true
+                ));
+        }
+        client.handleFilesRequest(path, ls);
+        operationCode = -1;
     }
 }

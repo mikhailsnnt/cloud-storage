@@ -2,11 +2,13 @@ package com.sainnt.util;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class CodesInfo {
-    private CodesInfo(){}
-    private  static final Map<Integer, String>  exceptionDescriptions;
+    private CodesInfo() {
+    }
+
+    private static final Map<Integer, String> exceptionDescriptions;
+
     static {
         exceptionDescriptions = new HashMap<>();
         exceptionDescriptions.put(200, "Access denied");
@@ -18,10 +20,12 @@ public class CodesInfo {
         exceptionDescriptions.put(206, "Internal server error");
         exceptionDescriptions.put(207, "Invalid filename");
     }
-    public static String getExceptionDescription(int code){
+
+    public static String getExceptionDescription(int code) {
         return exceptionDescriptions.get(code);
     }
-    public static boolean isExceptionCode(int code){
+
+    public static boolean isExceptionCode(int code) {
         return exceptionDescriptions.containsKey(code);
     }
 }

@@ -3,11 +3,8 @@ package com.sainnt.views.treeview;
 import com.sainnt.files.FileRepresentation;
 import com.sainnt.observer.DirectoryObserver;
 import com.sainnt.views.CustomListBinder;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
-
-import java.util.stream.Collectors;
 
 public class FileTreeItem extends TreeItem<FileRepresentation> implements DirectoryObserver {
     private boolean firstTimeLoad = true;
@@ -18,7 +15,7 @@ public class FileTreeItem extends TreeItem<FileRepresentation> implements Direct
 
     @Override
     public boolean isLeaf() {
-        return !getValue().isDirectory();
+        return getValue().isFile();
     }
 
     @Override
