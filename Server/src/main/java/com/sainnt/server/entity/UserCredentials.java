@@ -1,6 +1,9 @@
 package com.sainnt.server.entity;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
@@ -11,7 +14,7 @@ import java.util.Objects;
 @Setter
 @ToString
 @NoArgsConstructor
-@Table(name="users_credentials")
+@Table(name = "users_credentials")
 public class UserCredentials {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +29,7 @@ public class UserCredentials {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         UserCredentials that = (UserCredentials) o;
-        return  Objects.equals(id, that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

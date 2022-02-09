@@ -20,6 +20,7 @@ public class PipeLineBuilderImpl implements PipeLineBuilder {
     private final AuthenticationService authService;
     private final FileOperationsService fileService;
     private final NavigationService navigationService;
+
     @Autowired
     public PipeLineBuilderImpl(AuthenticationService authService, FileOperationsService fileService, NavigationService navigationService) {
         this.authService = authService;
@@ -32,7 +33,7 @@ public class PipeLineBuilderImpl implements PipeLineBuilder {
         OperationDecoder operationDecoder = new OperationDecoder(user, authService);
         pipeline.addLast(operationDecoder);
         pipeline.addLast(new CreateFolderRequestHandler(navigationService));
-        pipeline.addLast(new UploadFileRequestHandler(fileService,operationDecoder));
+        pipeline.addLast(new UploadFileRequestHandler(fileService, operationDecoder));
         pipeline.addLast(new DeleteFileRequestHandler(navigationService));
         pipeline.addLast(new FileDtoResponseEncoder());
         pipeline.addLast(new FilesListResponseHandler());

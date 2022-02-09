@@ -24,7 +24,7 @@ public class Directory {
     @JoinTable(
             name = "dirs_owners",
             joinColumns = {
-                    @JoinColumn (name = "dir_id")},
+                    @JoinColumn(name = "dir_id")},
             inverseJoinColumns = {
                     @JoinColumn(name = "user_id")
             }
@@ -36,7 +36,7 @@ public class Directory {
     @ToString.Exclude
     private Directory parent;
 
-    @OneToMany( mappedBy = "parent",fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
+    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     @ToString.Exclude
     private Set<Directory> subDirs;
 
@@ -50,7 +50,7 @@ public class Directory {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         Directory directory = (Directory) o;
-        return  Objects.equals(id, directory.id);
+        return Objects.equals(id, directory.id);
     }
 
     @Override

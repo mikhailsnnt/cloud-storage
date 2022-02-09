@@ -23,14 +23,13 @@ public class File {
     @Column(name = "is_complete")
     private boolean isComplete;
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "owner_id",referencedColumnName = "id")
+    @JoinColumn(name = "owner_id", referencedColumnName = "id")
     private User owner;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dir_id",referencedColumnName = "id")
+    @JoinColumn(name = "dir_id", referencedColumnName = "id")
     @ToString.Exclude
     private Directory parentDirectory;
-
 
 
     @Override
@@ -38,7 +37,7 @@ public class File {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         File file = (File) o;
-        return  Objects.equals(id, file.id);
+        return Objects.equals(id, file.id);
     }
 
     @Override

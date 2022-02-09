@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+
 @Component
 public class PasswordEncryptionProviderImpl implements PasswordEncryptionProvider {
     private final byte[] salts;
     private final MessageDigest messageDigest;
+
     public PasswordEncryptionProviderImpl() {
         try {
             messageDigest = MessageDigest.getInstance("SHA-256");
@@ -25,6 +27,6 @@ public class PasswordEncryptionProviderImpl implements PasswordEncryptionProvide
     @Override
     public byte[] getEncryptedPassword(byte[] password) {
         messageDigest.update(salts);
-        return  messageDigest.digest(password);
+        return messageDigest.digest(password);
     }
 }

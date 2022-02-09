@@ -8,15 +8,25 @@ import java.util.Set;
 
 public interface NavigationService {
     Directory findDirectoryByPath(String path, User user);
-    Directory createDirectory(String path,User user);
+
+    Directory createDirectory(String path, User user);
+
     void deleteDirectory(String path, User user);
+
     void renameDirectory(String path, User user, String newName);
+
     Set<Directory> getSubDirectories(String path, User user);
+
     Set<File> getFiles(String path, User user);
+
     File getFileByPath(String path, User user);
-    File createFile(String path,User user);
-    void deleteFile(String path,User user);
-    void renameFile(String path,User user, String newName);
+
+    File createFile(String path, User user);
+
+    void deleteFile(String path, User user);
+
+    void renameFile(String path, User user, String newName);
+
     void updateFileEntity(File file);
 
 }

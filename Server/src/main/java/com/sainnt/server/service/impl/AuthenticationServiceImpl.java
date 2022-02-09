@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
 @Service
 @Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -25,7 +26,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncryptionProvider encryptor;
     private final Set<Long> connectedUsers = new HashSet<>();
     private final EmailValidator emailValidator = EmailValidator.getInstance();
-
 
 
     @Autowired
@@ -40,18 +40,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         try {
             optionalUser = repository.getUserByUsername(username);
         } catch (DaoException e) {
-            log.error("Error fetching user",e);
+            log.error("Error fetching user", e);
             throw new InternalServerError();
         }
-        if(optionalUser.isEmpty())
+        if (optionalUser.isEmpty())
             return new LoginResult(null, LoginResult.Result.bad_credentials);
         User user = optionalUser.get();
-        if(connectedUsers.contains(user.getId()))
+        if (connectedUsers.contains(user.getId()))
             return new LoginResult(null, LoginResult.Result.user_already_logged_in);
-        if(!Arrays.equals( encryptor.getEncryptedPassword(password), user.getCredentials().getEncPassword() ))
+        if (!Arrays.equals(encryptor.getEncryptedPassword(password), user.getCredentials().getEncPassword()))
             return new LoginResult(null, LoginResult.Result.bad_credentials);
         connectedUsers.add(user.getId());
-        return  new LoginResult( user, LoginResult.Result.success);
+        return new LoginResult(user, LoginResult.Result.success);
     }
 
     @Override
@@ -61,18 +61,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public RegistrationResult registerUser(String username, String email, byte[] password) {
-        if(!validateEmail(email))
+        if (!validateEmail(email))
             return RegistrationResult.email_invalid;
-        if(!validatePassword(password))
+        if (!validatePassword(password))
             return RegistrationResult.password_invalid;
         try {
             if (repository.emailExists(email))
                 return RegistrationResult.email_exists;
             if (repository.usernameExists(username))
                 return RegistrationResult.username_occupied;
-        }
-        catch (DaoException e){
-            log.error("Error checking username|email occupation",e);
+        } catch (DaoException e) {
+            log.error("Error checking username|email occupation", e);
             throw new InternalServerError();
         }
         User user = new User();
@@ -81,21 +80,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UserCredentials credentials = new UserCredentials();
         credentials.setEncPassword(encryptor.getEncryptedPassword(password));
         user.setCredentials(credentials);
-        try{
+        try {
             repository.registerUser(user);
-        }
-        catch (DaoException e){
-            log.error("Error saving user entity during registration: ",e);
+        } catch (DaoException e) {
+            log.error("Error saving user entity during registration: ", e);
             throw new InternalServerError();
         }
-        log.info("User registered: {}",user);
+        log.info("User registered: {}", user);
         return RegistrationResult.success;
     }
 
-    private boolean validateEmail(String email){
+    private boolean validateEmail(String email) {
         return emailValidator.isValid(email);
     }
-    private boolean validatePassword(byte[] password){
+
+    private boolean validatePassword(byte[] password) {
         return password.length > 5;
     }
 }

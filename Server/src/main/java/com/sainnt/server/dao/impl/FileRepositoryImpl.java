@@ -17,8 +17,8 @@ public class FileRepositoryImpl implements FileRepository {
             Transaction transaction = session.beginTransaction();
             session.save(file);
             transaction.commit();
-        }catch (Exception e){
-            throw  new DaoException(e);
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 
@@ -29,8 +29,8 @@ public class FileRepositoryImpl implements FileRepository {
             Transaction transaction = session.beginTransaction();
             session.delete(file);
             transaction.commit();
-        }catch (Exception e){
-            throw  new DaoException(e);
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 
@@ -42,8 +42,8 @@ public class FileRepositoryImpl implements FileRepository {
             Transaction transaction = session.beginTransaction();
             session.update(file);
             transaction.commit();
-        }catch (Exception e){
-            throw  new DaoException(e);
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 }

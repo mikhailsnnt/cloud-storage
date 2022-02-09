@@ -1,6 +1,6 @@
 package com.sainnt.server.exception;
 
-public abstract class   ClientAvailableException extends RuntimeException{
+public abstract class ClientAvailableException extends RuntimeException {
     public ClientAvailableException() {
     }
 

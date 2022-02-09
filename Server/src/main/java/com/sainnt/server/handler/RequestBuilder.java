@@ -5,6 +5,8 @@ import io.netty.buffer.ByteBuf;
 
 public interface RequestBuilder {
     boolean addBytesFromByteBuf(ByteBuf buf);
+
     Request getResultRequest();
+
     void releaseResources();
 }

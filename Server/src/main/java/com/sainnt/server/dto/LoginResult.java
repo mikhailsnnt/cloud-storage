@@ -9,6 +9,7 @@ import lombok.Data;
 public class LoginResult {
     private User user;
     private Result result;
+
     public enum Result {
         success,
         bad_credentials,

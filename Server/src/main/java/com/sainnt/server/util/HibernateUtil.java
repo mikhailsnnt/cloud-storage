@@ -13,13 +13,13 @@ public class HibernateUtil {
     private static ThreadLocal<Session> threadLocal;
 
     static {
-        try{
+        try {
             registry = new StandardServiceRegistryBuilder().configure().build();
             MetadataSources sources = new MetadataSources(registry);
             Metadata metadata = sources.getMetadataBuilder().build();
             sessionFactory = metadata.getSessionFactoryBuilder().build();
             threadLocal = new ThreadLocal<>();
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
             shutdown();
         }
@@ -29,10 +29,11 @@ public class HibernateUtil {
         return sessionFactory;
     }
 
-    public static void shutdown(){
-        if(registry!=null)
+    public static void shutdown() {
+        if (registry != null)
             StandardServiceRegistryBuilder.destroy(registry);
     }
+
     public static Session getCurrentSession() {
         Session session = threadLocal.get();
         if (session == null) {

@@ -9,11 +9,12 @@ import io.netty.buffer.PooledByteBufAllocator;
 
 
 public abstract class OneStringRequestBuilder implements RequestBuilder {
-    private enum  state{
+    private enum state {
         readStringSize,
         readString,
         completed
     }
+
     private Request request;
     private final ByteBuf buf;
     private state currentState;
@@ -26,19 +27,17 @@ public abstract class OneStringRequestBuilder implements RequestBuilder {
 
     @Override
     public boolean addBytesFromByteBuf(ByteBuf in) {
-        switch (currentState)
-        {
+        switch (currentState) {
             case readStringSize:
-                pathSize = CommonReadWriteOperations.readIntHeader(in,buf);
-                if(pathSize==-1)
+                pathSize = CommonReadWriteOperations.readIntHeader(in, buf);
+                if (pathSize == -1)
                     break;
-                CommonReadWriteOperations.ensureCapacity(buf,pathSize);
+                CommonReadWriteOperations.ensureCapacity(buf, pathSize);
                 currentState = state.readString;
 
             case readString:
-                String s = CommonReadWriteOperations.readString(in,pathSize,buf);
-                if(s != null)
-                {
+                String s = CommonReadWriteOperations.readString(in, pathSize, buf);
+                if (s != null) {
                     request = formRequest(s);
                     buf.release();
                     currentState = state.completed;
@@ -48,7 +47,7 @@ public abstract class OneStringRequestBuilder implements RequestBuilder {
         return false;
     }
 
-    protected abstract Request  formRequest(String str);
+    protected abstract Request formRequest(String str);
 
 
     @Override

@@ -15,8 +15,8 @@ public class DeleteFileRequestHandler extends SimpleChannelInboundHandler<Delete
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, DeleteFileRequest deleteFileRequest) throws Exception {
-        navigationService.deleteFile(deleteFileRequest.getPath(),deleteFileRequest.getUser());
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, DeleteFileRequest deleteFileRequest) {
+        navigationService.deleteFile(deleteFileRequest.getPath(), deleteFileRequest.getUser());
         CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_OP_DELETED_FILE);
     }
 }

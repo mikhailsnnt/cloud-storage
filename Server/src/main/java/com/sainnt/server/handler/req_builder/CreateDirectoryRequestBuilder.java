@@ -10,6 +10,6 @@ public class CreateDirectoryRequestBuilder extends OneStringRequestBuilder {
     protected Request formRequest(String str) {
         CreateDirectoryRequest req = new CreateDirectoryRequest();
         req.setPath(str);
-        return  req;
+        return req;
     }
 }

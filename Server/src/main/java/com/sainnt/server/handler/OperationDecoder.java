@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
+
 @Slf4j
 public class OperationDecoder extends ByteToMessageDecoder {
     private final AuthenticationService authService;
@@ -28,8 +29,7 @@ public class OperationDecoder extends ByteToMessageDecoder {
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) {
-        if(requestBuilder != null)
-        {
+        if (requestBuilder != null) {
             requestBuilder.releaseResources();
         }
         authService.userDisconnected(user.getId());
@@ -37,12 +37,11 @@ public class OperationDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
-        transferInput(channelHandlerContext, byteBuf,list);
-        if(byteBuf.readableBytes()<InteractionCodes.HEADER_SIZE)
+        transferInput(channelHandlerContext, byteBuf, list);
+        if (byteBuf.readableBytes() < InteractionCodes.HEADER_SIZE)
             return;
         int operationCode = byteBuf.readInt();
-        if (operationCode == InteractionCodes.CODE_EXIT)
-        {
+        if (operationCode == InteractionCodes.CODE_EXIT) {
             try {
                 channelHandlerContext.close().sync();
             } catch (InterruptedException e) {
@@ -50,34 +49,30 @@ public class OperationDecoder extends ByteToMessageDecoder {
             }
         }
         Optional<Class<? extends RequestBuilder>> requestBuilderClass = InteractionCodes.getRequestBuilderClass(operationCode);
-        if(requestBuilderClass.isPresent())
-        {
+        if (requestBuilderClass.isPresent()) {
             try {
                 requestBuilder = requestBuilderClass.get().getDeclaredConstructor().newInstance();
+            } catch (Exception exception) {
+                log.error("Request builder creating error", exception);
             }
-            catch (Exception exception){
-                log.error("Request builder creating error",exception);
-            }
-        }
-        else
+        } else
             CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_INVALID_REQUEST);
 
 
-
-        if (byteBuf.readableBytes()>0)
-            transferInput(channelHandlerContext,byteBuf, list);
+        if (byteBuf.readableBytes() > 0)
+            transferInput(channelHandlerContext, byteBuf, list);
 
     }
-    void transferInput(ChannelHandlerContext ctx,ByteBuf byteBuf, List<Object> list){
+
+    void transferInput(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) {
         if (transferringOperation != null) {
-            if (transferringOperation.transferBytesFromByteBuf(byteBuf)){
+            if (transferringOperation.transferBytesFromByteBuf(byteBuf)) {
                 transferringOperation = null;
-                CommonReadWriteOperations.sendIntCodeResponse(ctx,InteractionCodes.CODE_UPLOADED_SUCCESSFULLY);
+                CommonReadWriteOperations.sendIntCodeResponse(ctx, InteractionCodes.CODE_UPLOADED_SUCCESSFULLY);
             }
         }
-        if (requestBuilder != null)
-        {
-            if(requestBuilder.addBytesFromByteBuf(byteBuf)){
+        if (requestBuilder != null) {
+            if (requestBuilder.addBytesFromByteBuf(byteBuf)) {
                 Request request = requestBuilder.getResultRequest();
                 request.setUser(user);
                 requestBuilder = null;

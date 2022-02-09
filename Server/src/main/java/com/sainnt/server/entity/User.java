@@ -25,7 +25,7 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @OneToOne(fetch = FetchType.LAZY,cascade = {CascadeType.ALL})
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
     @JoinColumn(name = "credentials_id", referencedColumnName = "id")
     @ToString.Exclude
     private UserCredentials credentials;
@@ -35,7 +35,7 @@ public class User {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         User user = (User) o;
-        return  Objects.equals(id, user.id);
+        return Objects.equals(id, user.id);
     }
 
     @Override

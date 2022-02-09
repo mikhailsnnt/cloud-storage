@@ -17,9 +17,9 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             Transaction transaction = session.beginTransaction();
             Directory rootDir = session.get(Directory.class, 1);
             transaction.commit();
-            return  rootDir;
-        }catch (Exception e){
-            throw  new DaoException(e);
+            return rootDir;
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 
@@ -30,8 +30,8 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             Transaction transaction = session.beginTransaction();
             session.save(dir);
             transaction.commit();
-        }catch (Exception e){
-            throw  new DaoException(e);
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 
@@ -42,8 +42,8 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             Transaction transaction = session.beginTransaction();
             session.delete(dir);
             transaction.commit();
-        }catch (Exception e){
-            throw  new DaoException(e);
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 
@@ -54,8 +54,8 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             Transaction transaction = session.beginTransaction();
             session.update(dir);
             transaction.commit();
-        }catch (Exception e){
-            throw  new DaoException(e);
+        } catch (Exception e) {
+            throw new DaoException(e);
         }
     }
 }
