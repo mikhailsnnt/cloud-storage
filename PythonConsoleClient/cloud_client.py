@@ -2,6 +2,7 @@ import hashlib
 import os.path
 import socket
 from getpass import getpass
+
 import tqdm
 
 from file_dto import *
@@ -79,13 +80,13 @@ def send_file(path):
     content = a_file.read()
     md5_hash.update(content)
     send_int_header(filesize, 8)
-    send_int_header(md5_hash.digest_size,4)
+    send_int_header(md5_hash.digest_size, 4)
     sock.sendall(md5_hash.digest())
     r = read_response_code()
     print(r)
     if r != 8:
         return False
-    progress = tqdm.tqdm(range(filesize), f'Sendinig {filename}',unit_scale=True, unit_divisor=1024)
+    progress = tqdm.tqdm(range(filesize), f'Sendinig {filename}', unit_scale=True, unit_divisor=1024)
     with open(path, "rb") as f:
         while True:
             byte_buf = f.read(FILE_BUF_SIZE)
@@ -115,7 +116,7 @@ def read_response_code():
     try:
         code = read_int()
         if code >= 200:
-            print("Exception message:", read_str_with_header() )
+            print("Exception message:", read_str_with_header())
         return code
     except InterruptedError:
         return -1
@@ -142,7 +143,7 @@ def upload_file(local_path, remote_path):
     send_int_header(21)
     send_str_with_header(remote_path)
     if send_file(local_path):
-        print("Successfully uploaded %s"%os.path.basename(local_path))
+        print("Successfully uploaded %s" % os.path.basename(local_path))
 
 
 def main_loop():
@@ -205,7 +206,7 @@ def read_file_dto():
     dto = FileElem()
     dto.name = name
     dto.completed = completed
-    return  dto
+    return dto
 
 
 def list_remote_files(path):
@@ -235,8 +236,8 @@ def download_file(remote_path, local_path):
         return
     with open(local_path, "xb") as f:
         bytes_count = read_int(8)
-        blocks = bytes_count//FILE_BUF_SIZE
-        progress = tqdm.tqdm(range(bytes_count), f'Receiving  {bytes_count} bytes',unit_scale=True, unit_divisor=1024)
+        blocks = bytes_count // FILE_BUF_SIZE
+        progress = tqdm.tqdm(range(bytes_count), f'Receiving  {bytes_count} bytes', unit_scale=True, unit_divisor=1024)
         md5_hash = hashlib.md5()
         bt_read = 0
         for i in range(blocks):
@@ -247,7 +248,7 @@ def download_file(remote_path, local_path):
             progress.update(len(recv))
             progress.refresh()
         if bt_read < bytes_count:
-            recv = sock.recv(bytes_count-bt_read)
+            recv = sock.recv(bytes_count - bt_read)
             f.write(recv)
             md5_hash.update(recv)
             progress.update(len(recv))
@@ -265,4 +266,3 @@ if __name__ == "__main__":
     print("Connected to server")
     auth()
     main_loop()
-
