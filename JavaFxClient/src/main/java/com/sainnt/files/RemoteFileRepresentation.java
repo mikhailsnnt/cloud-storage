@@ -6,10 +6,10 @@ import javafx.collections.ObservableList;
 
 import java.io.File;
 
-public class RemoteFileRepresentation implements FileRepresentation{
+public class RemoteFileRepresentation implements FileRepresentation {
     private final String path;
     private final String name;
-    private  boolean firstTimeLoad = true;
+    private boolean firstTimeLoad = true;
     private final boolean isDirectory;
     private final ObservableList<FileRepresentation> children;
 
@@ -22,9 +22,9 @@ public class RemoteFileRepresentation implements FileRepresentation{
 
     @Override
     public String getPath() {
-        if(path.isBlank())
+        if (path.isBlank())
             return name;
-        return path+"/"+name;
+        return path + "/" + name;
     }
 
     @Override
@@ -33,8 +33,8 @@ public class RemoteFileRepresentation implements FileRepresentation{
     }
 
     @Override
-    public boolean isDirectory() {
-        return isDirectory;
+    public boolean isFile() {
+        return !isDirectory;
     }
 
     @Override
@@ -44,18 +44,18 @@ public class RemoteFileRepresentation implements FileRepresentation{
 
     @Override
     public File getFile() {
-        return null ;
+        return null;
     }
 
 
     @Override
     public void copyFileToDirectory(File file) {
-
+        CloudClient.getClient().uploadFile(getPath() + "/" + file.getName(), file);
     }
 
     @Override
-    public void loadContent(){
-        if(firstTimeLoad && isDirectory) {
+    public void loadContent() {
+        if (firstTimeLoad && isDirectory) {
             CloudClient.getClient().requestChildrenFiles(getPath(), children);
             firstTimeLoad = false;
         }

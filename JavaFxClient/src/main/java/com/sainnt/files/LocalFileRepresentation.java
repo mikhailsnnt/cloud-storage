@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class LocalFileRepresentation implements FileRepresentation {
     private final Path path;
@@ -31,18 +29,18 @@ public class LocalFileRepresentation implements FileRepresentation {
 
     @Override
     public String getName() {
-        if(path.getFileName()==null)
+        if (path.getFileName() == null)
             return "";
         return path.normalize().getFileName().toString();
     }
 
     @Override
-    public boolean isDirectory() {
-        if(firstTimeLeaf) {
+    public boolean isFile() {
+        if (firstTimeLeaf) {
             isDirectory = Files.isDirectory(path);
             firstTimeLeaf = false;
         }
-        return isDirectory;
+        return !isDirectory;
     }
 
     @Override
@@ -58,7 +56,7 @@ public class LocalFileRepresentation implements FileRepresentation {
 
     @Override
     public void copyFileToDirectory(File file) {
-        if(isDirectory){
+        if (isDirectory) {
             try {
                 Files.copy(file.toPath(), path.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
@@ -69,11 +67,11 @@ public class LocalFileRepresentation implements FileRepresentation {
 
     @Override
     public void loadContent() {
-        if(firstTimeLoad &&  isDirectory)
+        if (firstTimeLoad && isDirectory)
             loadChildren();
     }
 
-    private boolean filterFiles(Path file){
+    private boolean filterFiles(Path file) {
         try {
             return !Files.isHidden(file);
         } catch (IOException e) {
@@ -81,7 +79,7 @@ public class LocalFileRepresentation implements FileRepresentation {
         }
     }
 
-    private synchronized void loadChildren(){
+    private synchronized void loadChildren() {
         try {
             children.clear();
             Files.list(path)

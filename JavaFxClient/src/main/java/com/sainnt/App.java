@@ -5,10 +5,8 @@ import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.CloudClient;
 import com.sainnt.views.LocalFilesView;
 import com.sainnt.views.RemoteFilesView;
-import com.sainnt.views.treeview.FilesView;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -27,19 +25,21 @@ import java.io.IOException;
  */
 public class App extends Application {
     private Stage stage;
+
     @Override
-    public void start(Stage stage)  {
+    public void start(Stage stage) {
         this.stage = stage;
         CloudClient.getClient();
+        this.stage.setOnCloseRequest(windowEvent -> closeApp());
         initializeLoginScene();
 
     }
 
-    public void initializeLoginScene(){
+    public void initializeLoginScene() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("login_scene.fxml"));
         try {
             Scene scene = new Scene(fxmlLoader.load());
-            ((LoginPageController)fxmlLoader.getController()).setOnLoggedIn(this::initializeMainScene);
+            ((LoginPageController) fxmlLoader.getController()).setOnLoggedIn(this::initializeMainScene);
             stage.setTitle("Log in or sign up");
             stage.setScene(scene);
             stage.show();
@@ -48,25 +48,26 @@ public class App extends Application {
         }
     }
 
-    public void initializeMainScene(){
+    public void initializeMainScene() {
         //Initialising file views
         LocalFilesView localFilesView = new LocalFilesView();
         RemoteFilesView remoteFilesView = new RemoteFilesView();
-        remoteFilesView.setRoot(new RemoteFileRepresentation("","",true));
+        remoteFilesView.setRoot(new RemoteFileRepresentation("", "", true));
         AnchorPane localSide = getColoredPaneWithView(localFilesView, "#FFFAF0");
         AnchorPane remoteSide = getColoredPaneWithView(remoteFilesView, "#E0FFFF");
-        SplitPane splitPane = new SplitPane(localSide,remoteSide);
+        SplitPane splitPane = new SplitPane(localSide, remoteSide);
         splitPane.setStyle("-fx-focus-color:transparent");
-        splitPane.setDividerPosition(1,0.5);
+        splitPane.setDividerPosition(1, 0.5);
         VBox.setVgrow(splitPane, Priority.ALWAYS);
 
         //Initialising menu bar
         Menu mainMenu = new Menu("Cloud-storage");
         MenuItem preferencesItem = new MenuItem("Preferences");
         MenuItem quitItem = new MenuItem("Quit");
+        quitItem.setOnAction(t -> closeApp());
         mainMenu.getItems().addAll(preferencesItem, new SeparatorMenuItem(), quitItem);
         Menu editMenu = new Menu("Edit");
-        MenuItem  undoEditItem = new MenuItem("Undo");
+        MenuItem undoEditItem = new MenuItem("Undo");
         MenuItem redoEditItem = new MenuItem("Redo");
 
         editMenu.getItems().addAll(
@@ -90,14 +91,17 @@ public class App extends Application {
         AnchorPane pane = new AnchorPane(node);
         pane.setBackground(Background.fill(Paint.valueOf(color)));
         node.setOpacity(0.6);
-        AnchorPane.setBottomAnchor(node,0.0);
-        AnchorPane.setTopAnchor(node,0.0);
-        AnchorPane.setLeftAnchor(node,0.0);
-        AnchorPane.setRightAnchor(node,0.0);
+        AnchorPane.setBottomAnchor(node, 0.0);
+        AnchorPane.setTopAnchor(node, 0.0);
+        AnchorPane.setLeftAnchor(node, 0.0);
+        AnchorPane.setRightAnchor(node, 0.0);
         return pane;
     }
 
-
+    private void closeApp() {
+        CloudClient.getClient().closeConnection();
+        Platform.exit();
+    }
 
     public static void main(String[] args) {
         launch();

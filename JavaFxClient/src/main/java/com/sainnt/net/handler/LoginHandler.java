@@ -7,6 +7,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Consumer;
@@ -75,7 +76,14 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void removeLoginController(ChannelHandlerContext ctx){
-        ctx.pipeline().addLast(new OperationHandler());
+        ctx.pipeline().addLast(new OperationHandler(t->showError(t.getExceptionType(),t.getDetails())));
         ctx.pipeline().remove(this);
+    }
+    private void showError(String header,String content){
+        Platform.runLater(()->{
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.show();});
     }
 }

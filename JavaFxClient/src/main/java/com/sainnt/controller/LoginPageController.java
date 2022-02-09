@@ -3,8 +3,6 @@ package com.sainnt.controller;
 import com.sainnt.dto.SignInResult;
 import com.sainnt.dto.SignUpResult;
 import com.sainnt.net.CloudClient;
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -30,56 +28,56 @@ public class LoginPageController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         CloudClient.getClient().initLoginHandler(this::handleSignIn, this::handleSignUp);
-        signInLoginTextField.setOnAction(event->signInPasswordField.requestFocus());
-        signInPasswordField.setOnAction(event->signInButton.fire());
+        signInLoginTextField.setOnAction(event -> signInPasswordField.requestFocus());
+        signInPasswordField.setOnAction(event -> signInButton.fire());
 
-        signUpLoginTextField.setOnAction(event->signUpEmailTextField.requestFocus());
-        signUpEmailTextField.setOnAction(event->signUpPasswordField.requestFocus());
-        signUpPasswordField.setOnAction(event->signUpButton.fire());
+        signUpLoginTextField.setOnAction(event -> signUpEmailTextField.requestFocus());
+        signUpEmailTextField.setOnAction(event -> signUpPasswordField.requestFocus());
+        signUpPasswordField.setOnAction(event -> signUpButton.fire());
     }
-    public void setOnLoggedIn(Runnable action){
+
+    public void setOnLoggedIn(Runnable action) {
         onLoggedIn = action;
     }
 
 
-    public void signIn(ActionEvent actionEvent) {
+    public void signIn() {
         showProgressIndicator();
         CloudClient.getClient().authenticate(signInLoginTextField.getText(), signInPasswordField.getText());
         signInPasswordField.clear();
     }
 
-    public void signUp(ActionEvent actionEvent) {
+    public void signUp() {
         showProgressIndicator();
-        CloudClient.getClient().register(signUpLoginTextField.getText(),signUpEmailTextField.getText(),signUpPasswordField.getText());
+        CloudClient.getClient().register(signUpLoginTextField.getText(), signUpEmailTextField.getText(), signUpPasswordField.getText());
         signUpPasswordField.clear();
     }
 
-    public void handleSignIn(SignInResult result){
+    public void handleSignIn(SignInResult result) {
         hideProgressIndicator();
-        if(result == SignInResult.success) {
+        if (result == SignInResult.success) {
             onLoggedIn.run();
-        }
-        else if (result==SignInResult.bad_credentials){
-            showInformation("Authentication failed","Bad credentials");
-        }
-        else if(result == SignInResult.user_already_logged_in){
-            showInformation("Authentication failed","User is already logged in");
+        } else if (result == SignInResult.bad_credentials) {
+            showInformation("Authentication failed", "Bad credentials");
+        } else if (result == SignInResult.user_already_logged_in) {
+            showInformation("Authentication failed", "User is already logged in");
         }
     }
-    public void handleSignUp(SignUpResult result){
+
+    public void handleSignUp(SignUpResult result) {
         hideProgressIndicator();
-        if(result == SignUpResult.success)
-            showInformation("Signed up successfully, please log in","");
-        else if(result==SignUpResult.email_invalid)
-            showInformation("Registration failed","Email is invalid");
-        else if(result == SignUpResult.password_invalid)
-            showInformation("Registration failed","Password is not strong enough");
+        if (result == SignUpResult.success)
+            showInformation("Signed up successfully, please log in", "");
+        else if (result == SignUpResult.email_invalid)
+            showInformation("Registration failed", "Email is invalid");
+        else if (result == SignUpResult.password_invalid)
+            showInformation("Registration failed", "Password is not strong enough");
 
 
     }
 
-    private void showProgressIndicator(){
-        if(progressIndicatorBox == null){
+    private void showProgressIndicator() {
+        if (progressIndicatorBox == null) {
             progressIndicatorBox = new VBox();
             ProgressIndicator indicator = new ProgressIndicator();
             progressIndicatorBox.setAlignment(Pos.CENTER);
@@ -89,14 +87,13 @@ public class LoginPageController implements Initializable {
         rootPane.getChildren().add(progressIndicatorBox);
     }
 
-    public void hideProgressIndicator(){
+    public void hideProgressIndicator() {
         tabPane.setDisable(false);
         rootPane.getChildren().remove(progressIndicatorBox);
     }
 
 
-
-    private void showInformation(String header, String info){
+    private void showInformation(String header, String info) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setHeaderText(header);
         alert.setContentText(info);
