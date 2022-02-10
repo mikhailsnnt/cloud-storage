@@ -117,8 +117,9 @@ public class FileCell extends TreeCell<FileRepresentation> {
                 } catch (FileAlreadyExistsException e) {
                     displayError("Could not rename, file already exists", e.getMessage());
                     return;
-                } catch (FileRenamingFailedException e) {
-                    displayError("File renaming failed", e.getMessage());
+                }
+                catch (FileRenamingFailedException e){
+                    displayError("File renaming failed",e.getMessage());
                     return;
                 }
                 commitEdit(getItem());

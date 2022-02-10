@@ -63,6 +63,6 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     @Override
     public void setName(String name) {
-
+        CloudClient.getClient().renameFileRequest(getPath(), name);
     }
 }

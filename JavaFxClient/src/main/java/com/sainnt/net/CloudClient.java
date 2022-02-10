@@ -243,4 +243,32 @@ public class CloudClient {
         channel.writeAndFlush(fileRegion);
     }
 
+    public void renameFileRequest(String path, String name) {
+        // Not implemented on server side yet
+    }
+
+    public void deleteFileRequest(String path) {
+        if(!connected){
+            log.info("File delete declined, not connected to server");
+            return;
+        }
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                ByteBuf buf = channel.alloc().buffer(8 + path.length());
+                buf.writeInt(22);
+                buf.writeInt(path.length());
+                buf.writeBytes(path.getBytes(StandardCharsets.UTF_8));
+                channel.writeAndFlush(buf);
+                return null;
+            }
+        };
+        Thread thread = new Thread(task);
+        thread.start();
+
+    }
+
+    public void deleteDirectoryRequest(String path) {
+        // Not implemented on server side yet
+    }
 }
