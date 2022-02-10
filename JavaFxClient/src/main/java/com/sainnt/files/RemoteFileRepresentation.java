@@ -60,4 +60,9 @@ public class RemoteFileRepresentation implements FileRepresentation {
             firstTimeLoad = false;
         }
     }
+
+    @Override
+    public void setName(String name) {
+
+    }
 }

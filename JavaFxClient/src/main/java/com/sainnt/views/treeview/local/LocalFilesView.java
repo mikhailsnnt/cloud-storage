@@ -1,4 +1,4 @@
-package com.sainnt.views;
+package com.sainnt.views.treeview.local;
 
 import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.LocalFileRepresentation;
@@ -15,14 +15,13 @@ public class LocalFilesView extends FilesView {
     public LocalFilesView() {
         setHomeDirPath();
         setShowRoot(false);
-        getRoot().addEventHandler(TreeItem.branchExpandedEvent(), this::processExpand);
-        getRoot().addEventHandler(TreeItem.branchCollapsedEvent(), this::processCollapse);
+
     }
 
     private void setHomeDirPath() {
         Path path = Paths.get(System.getProperty("user.home"));
         LocalFileRepresentation rootDir = new LocalFileRepresentation(path.getRoot());
-        setRoot(rootDir);
+        initiateRoot(new LocalFileTreeItem(rootDir));
         //Expanding path to home directory
         getRoot().setExpanded(true);
         getRoot().getValue().loadContent();
@@ -42,11 +41,13 @@ public class LocalFilesView extends FilesView {
         getSelectionModel().select(current);
     }
 
-    private void processExpand(FileTreeItem.TreeModificationEvent<FileRepresentation> event) {
+    @Override
+    protected void processExpand(FileTreeItem.TreeModificationEvent<FileRepresentation> event) {
         LocalDirectoryObservable.getInstance().addObserver((DirectoryObserver) event.getTreeItem());
     }
 
-    private void processCollapse(FileTreeItem.TreeModificationEvent<FileRepresentation> event) {
+    @Override
+    protected void processCollapse(FileTreeItem.TreeModificationEvent<FileRepresentation> event) {
         LocalDirectoryObservable.getInstance().removeObserver((DirectoryObserver) event.getTreeItem());
     }
 }

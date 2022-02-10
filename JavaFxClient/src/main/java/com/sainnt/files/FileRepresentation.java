@@ -19,4 +19,7 @@ public interface FileRepresentation {
     void copyFileToDirectory(File file);
 
     void loadContent();
+
+    void setName(String name);
+
 }

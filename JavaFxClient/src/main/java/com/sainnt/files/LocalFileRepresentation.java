@@ -1,6 +1,8 @@
 package com.sainnt.files;
 
 
+import com.sainnt.exception.FileAlreadyExistsException;
+import com.sainnt.exception.FileRenamingFailedException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -69,6 +71,15 @@ public class LocalFileRepresentation implements FileRepresentation {
     public void loadContent() {
         if (firstTimeLoad && isDirectory)
             loadChildren();
+    }
+
+    @Override
+    public void setName(String name) throws FileAlreadyExistsException, FileRenamingFailedException {
+        Path newPath = path.getParent().resolve(name);
+        if (Files.exists(newPath))
+            throw new FileAlreadyExistsException(newPath.toString());
+        if (!path.toFile().renameTo(newPath.toFile()))
+            throw new FileRenamingFailedException(newPath.toString());
     }
 
     private boolean filterFiles(Path file) {

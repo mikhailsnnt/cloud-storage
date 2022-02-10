@@ -4,13 +4,15 @@ import com.sainnt.files.FileRepresentation;
 import com.sainnt.observer.DirectoryObserver;
 import com.sainnt.views.CustomListBinder;
 import javafx.collections.ObservableList;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeItem;
 
-public class FileTreeItem extends TreeItem<FileRepresentation> implements DirectoryObserver {
+public abstract class FileTreeItem extends TreeItem<FileRepresentation> implements DirectoryObserver {
     private boolean firstTimeLoad = true;
+
     public FileTreeItem(FileRepresentation fileRepresentation) {
         super(fileRepresentation);
-        CustomListBinder.bindLists(super.getChildren(),fileRepresentation.getChildren(), FileTreeItem::new);
+        CustomListBinder.bindLists(super.getChildren(), fileRepresentation.getChildren(), this::getTreeItemForFile);
     }
 
     @Override
@@ -20,26 +22,24 @@ public class FileTreeItem extends TreeItem<FileRepresentation> implements Direct
 
     @Override
     public ObservableList<TreeItem<FileRepresentation>> getChildren() {
-        if(firstTimeLoad){
-           getValue().getChildren();
+        if (firstTimeLoad) {
+            getValue().getChildren();
             firstTimeLoad = false;
         }
         return super.getChildren();
     }
 
+    public abstract FileTreeItem getTreeItemForFile(FileRepresentation file);
 
 
     @Override
     public void fileAdded(FileRepresentation file) {
-        getChildren().add(new FileTreeItem(file));
+        getChildren().add(getTreeItemForFile(file));
     }
 
     @Override
     public void fileRemoved(FileRepresentation file) {
-        System.out.println(file.getFile().getAbsolutePath());
-        TreeItem<FileRepresentation> treeItem = getChildren().stream().filter(t -> t.getValue().getFile().getAbsolutePath().equals(file.getFile().getAbsolutePath())).findFirst().orElseThrow();
-        System.out.println("Removing "+ file.getName());
-        getChildren().remove(treeItem);
+        getChildren().removeIf(t -> t.getValue().getName().equals(file.getName()));
     }
 
     @Override
@@ -49,6 +49,11 @@ public class FileTreeItem extends TreeItem<FileRepresentation> implements Direct
 
     @Override
     public FileRepresentation getDirectory() {
-        return getValue();
+        FileRepresentation value = getValue();
+        if (value.isFile())
+            throw new RuntimeException("Directory expected but file found:" + value.getPath());
+        return value;
     }
+
+    public abstract ContextMenu getMenu(Runnable startEdit);
 }

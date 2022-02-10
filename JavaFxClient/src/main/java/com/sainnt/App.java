@@ -1,10 +1,9 @@
 package com.sainnt;
 
 import com.sainnt.controller.LoginPageController;
-import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.CloudClient;
-import com.sainnt.views.LocalFilesView;
-import com.sainnt.views.RemoteFilesView;
+import com.sainnt.views.treeview.local.LocalFilesView;
+import com.sainnt.views.treeview.remote.RemoteFilesView;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -52,7 +51,6 @@ public class App extends Application {
         //Initialising file views
         LocalFilesView localFilesView = new LocalFilesView();
         RemoteFilesView remoteFilesView = new RemoteFilesView();
-        remoteFilesView.setRoot(new RemoteFileRepresentation("", "", true));
         AnchorPane localSide = getColoredPaneWithView(localFilesView, "#FFFAF0");
         AnchorPane remoteSide = getColoredPaneWithView(remoteFilesView, "#E0FFFF");
         SplitPane splitPane = new SplitPane(localSide, remoteSide);
