@@ -18,7 +18,12 @@ public class HibernateUtil {
             MetadataSources sources = new MetadataSources(registry);
             Metadata metadata = sources.getMetadataBuilder().build();
             sessionFactory = metadata.getSessionFactoryBuilder().build();
-            threadLocal = new ThreadLocal<>();
+            threadLocal = new ThreadLocal<>() {
+                @Override
+                protected Session initialValue() {
+                    return sessionFactory.openSession();
+                }
+            };
         } catch (Exception ex) {
             ex.printStackTrace();
             shutdown();
@@ -34,12 +39,8 @@ public class HibernateUtil {
             StandardServiceRegistryBuilder.destroy(registry);
     }
 
+
     public static Session getCurrentSession() {
-        Session session = threadLocal.get();
-        if (session == null) {
-            session = sessionFactory.openSession();
-            threadLocal.set(session);
-        }
-        return session;
+        return threadLocal.get();
     }
 }

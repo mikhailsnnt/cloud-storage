@@ -28,7 +28,7 @@ public class CloudServer {
         this.pipeLineBuilder = pipeLineBuilder;
     }
 
-    public void run() throws Exception {
+    public void run() {
         HibernateUtil.getSessionFactory().openSession();
         EventLoopGroup acceptGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -49,11 +49,13 @@ public class CloudServer {
                     .option(ChannelOption.SO_BACKLOG, 120)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
             ChannelFuture future = bootstrap.bind(port).sync();
-
             future.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         } finally {
             acceptGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            HibernateUtil.shutdown();
         }
     }
 
@@ -61,7 +63,7 @@ public class CloudServer {
         this.port = port;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         int port = 9096;
         if (args.length > 0)
             port = Integer.parseInt(args[0]);
