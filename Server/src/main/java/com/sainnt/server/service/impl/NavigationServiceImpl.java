@@ -3,6 +3,7 @@ package com.sainnt.server.service.impl;
 import com.sainnt.server.dao.DaoException;
 import com.sainnt.server.dao.DirectoryRepository;
 import com.sainnt.server.dao.FileRepository;
+import com.sainnt.server.dto.DirectoryWithAccessInfo;
 import com.sainnt.server.entity.Directory;
 import com.sainnt.server.entity.File;
 import com.sainnt.server.entity.User;
@@ -31,6 +32,14 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     public Directory findDirectoryByPath(String path, User user) {
+        DirectoryWithAccessInfo dir = findDirectoryWithAccessInfoByPath(path, user);
+        if (!dir.isUserAuthorized())
+            throw new AccessDeniedException(user.getUsername(), path);
+        return dir.getDirectory();
+    }
+
+    @Override
+    public DirectoryWithAccessInfo findDirectoryWithAccessInfoByPath(String path, User user) {
         Directory curDir;
         try {
             curDir = dirRepository.loadRootDirectory();
@@ -40,9 +49,7 @@ public class NavigationServiceImpl implements NavigationService {
         }
         boolean userAuthorized = curDir.getOwner().contains(user);
         if (path.isEmpty()) {
-            if (!userAuthorized)
-                throw new AccessDeniedException(user.getUsername(), path);
-            return curDir;
+            return new DirectoryWithAccessInfo(curDir, userAuthorized);
         }
         for (String dirName : path.split("/")) {
             curDir = curDir
@@ -54,9 +61,7 @@ public class NavigationServiceImpl implements NavigationService {
             if (!userAuthorized)
                 userAuthorized = curDir.getOwner().contains(user);
         }
-        if (!userAuthorized)
-            throw new AccessDeniedException(user.getUsername(), path);
-        return curDir;
+        return new DirectoryWithAccessInfo(curDir, userAuthorized);
     }
 
     @Override

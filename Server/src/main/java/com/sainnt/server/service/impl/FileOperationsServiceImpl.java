@@ -2,6 +2,7 @@ package com.sainnt.server.service.impl;
 
 import com.sainnt.server.dao.DaoException;
 import com.sainnt.server.dao.FileRepository;
+import com.sainnt.server.dto.DirectoryWithAccessInfo;
 import com.sainnt.server.dto.FileDto;
 import com.sainnt.server.dto.request.DownloadFileRequest;
 import com.sainnt.server.dto.request.FilesListRequest;
@@ -52,21 +53,24 @@ public class FileOperationsServiceImpl implements FileOperationsService {
 
     @Override
     public List<FileDto> getFiles(FilesListRequest request) {
-        Directory dir = navigationService.findDirectoryByPath(request.getPath(), request.getUser());
+        DirectoryWithAccessInfo directory = navigationService.findDirectoryWithAccessInfoByPath(request.getPath(), request.getUser());
         List<FileDto> list = new ArrayList<>();
-        Set<Directory> subDirs = dir.getSubDirs();
-        if (subDirs != null)
+        Set<Directory> subDirs = directory.getDirectory().getSubDirs();
+        if (directory.isUserAuthorized())
             subDirs.stream()
-                    .filter(t -> t.getOwner().contains(request.getUser()))
                     .map(t -> new FileDto(t.getName(), true, 0, true))
                     .forEach(list::add);
-        Set<File> files = dir.getFiles();
-        if (files != null) {
+        else
+            subDirs.stream()
+                    .filter(dir -> dir.getOwner().contains(request.getUser()))
+                    .map(t -> new FileDto(t.getName(), true, 0, true))
+                    .forEach(list::add);
+        Set<File> files = directory.getDirectory().getFiles();
+        if (directory.isUserAuthorized())
             files
                     .stream()
                     .map(t -> new FileDto(t.getName(), false, t.getSize(), t.isComplete()))
                     .forEach(list::add);
-        }
         return list;
     }
 
