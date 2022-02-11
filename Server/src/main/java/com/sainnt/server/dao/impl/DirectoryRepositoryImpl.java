@@ -12,49 +12,64 @@ import org.springframework.stereotype.Repository;
 public class DirectoryRepositoryImpl implements DirectoryRepository {
     @Override
     public Directory loadRootDirectory() throws DaoException {
+        Transaction transaction = null;
         try {
             Session session = HibernateUtil.getCurrentSession();
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             Directory rootDir = session.get(Directory.class, 1);
             transaction.commit();
             return rootDir;
         } catch (Exception e) {
+            if(transaction!=null)
+                transaction.rollback();
             throw new DaoException(e);
         }
     }
 
     @Override
     public void saveDirectory(Directory dir) throws DaoException {
+        Transaction transaction = null;
         try {
             Session session = HibernateUtil.getCurrentSession();
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.save(dir);
             transaction.commit();
         } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
             throw new DaoException(e);
         }
     }
 
     @Override
     public void deleteDirectory(Directory dir) throws DaoException {
+        Transaction transaction = null;
         try {
             Session session = HibernateUtil.getCurrentSession();
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
+            Directory parent = dir.getParent();
+            parent.getSubDirs().remove(dir);
+            session.update(parent);
             session.delete(dir);
             transaction.commit();
         } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
             throw new DaoException(e);
         }
     }
 
     @Override
     public void updateDirectory(Directory dir) throws DaoException {
+        Transaction transaction = null;
         try {
             Session session = HibernateUtil.getCurrentSession();
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.update(dir);
             transaction.commit();
         } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
             throw new DaoException(e);
         }
     }
