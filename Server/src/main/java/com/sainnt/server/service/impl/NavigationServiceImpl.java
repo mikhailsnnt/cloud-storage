@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -63,6 +64,45 @@ public class NavigationServiceImpl implements NavigationService {
         }
         return new DirectoryWithAccessInfo(curDir, userAuthorized);
     }
+
+    @Override
+    public DirectoryWithAccessInfo findDirectoryWithAccessInfoByPathN(String path, User user) {
+        if (path.isEmpty()) {
+            try {
+                Directory rootDir = dirRepository.loadRootDirectory();
+                return new DirectoryWithAccessInfo(rootDir, rootDir.getOwner().contains(user));
+            } catch (DaoException e) {
+                log.error("Loading root directory exception ", e);
+                throw new InternalServerError();
+            }
+        }
+        List<Directory> directories;
+        try {
+            directories = dirRepository.getDirectories();
+        } catch (DaoException e) {
+            log.error("Loading directories exception ", e);
+            throw new InternalServerError();
+        }
+        String[] dirNames = path.split("/");
+        int nextDirName = 0;
+        Directory curDir = directories.get(0);
+        boolean isAuthorized = curDir.getOwner().contains(user);
+        for (Directory dir :
+                directories) {
+            if (dir.getId() == 1)
+                continue;
+            if (dir.getName().equals(dirNames[nextDirName]) && dir.getParent().getId() == curDir.getId()) {
+                nextDirName++;
+                curDir = dir;
+                if (!isAuthorized)
+                    isAuthorized = curDir.getOwner().contains(user);
+                if (nextDirName == dirNames.length)
+                    return new DirectoryWithAccessInfo(curDir, isAuthorized);
+            }
+        }
+        throw new DirectoryNotFoundException(path);
+    }
+
 
     @Override
     public Directory createDirectory(String path, User user) {

@@ -6,7 +6,10 @@ import com.sainnt.server.entity.Directory;
 import com.sainnt.server.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public class DirectoryRepositoryImpl implements DirectoryRepository {
@@ -20,7 +23,24 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             transaction.commit();
             return rootDir;
         } catch (Exception e) {
-            if(transaction!=null)
+            if (transaction != null)
+                transaction.rollback();
+            throw new DaoException(e);
+        }
+    }
+
+    @Override
+    public List<Directory> getDirectories() throws DaoException {
+        Transaction transaction = null;
+        try {
+            Session session = HibernateUtil.getCurrentSession();
+            transaction = session.beginTransaction();
+            Query<Directory> query = session.createQuery("from Directory order by id", Directory.class);
+            List<Directory> resultList = query.getResultList();
+            transaction.commit();
+            return resultList;
+        } catch (Exception e) {
+            if (transaction != null)
                 transaction.rollback();
             throw new DaoException(e);
         }

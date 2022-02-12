@@ -12,6 +12,8 @@ public interface NavigationService {
 
     DirectoryWithAccessInfo findDirectoryWithAccessInfoByPath(String path, User user);
 
+    DirectoryWithAccessInfo findDirectoryWithAccessInfoByPathN(String path, User user);
+
     Directory createDirectory(String path, User user);
 
     void deleteDirectory(String path, User user);
