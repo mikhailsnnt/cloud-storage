@@ -11,8 +11,9 @@ import io.netty.buffer.PooledByteBufAllocator;
 public class UploadFileRequestBuilder implements RequestBuilder {
     private enum state {
         readFileSize,
-        readPathSize,
-        readPath,
+        readParentId,
+        readNameSize,
+        readName,
         readCheckSumSize,
         readCheckSum,
         completed
@@ -23,28 +24,34 @@ public class UploadFileRequestBuilder implements RequestBuilder {
 
     private static final int BASIC_SIZE = 8;
     private final ByteBuf buf;
-    private int pathSize = -1;
-    private String path;
+    private int nameSize = -1;
+    private String name;
     private int checkSumSize;
+    private long parentId = -1;
 
     public UploadFileRequestBuilder() {
         buf = PooledByteBufAllocator.DEFAULT.buffer(BASIC_SIZE);
-        currentState = state.readPathSize;
+        currentState = state.readParentId;
     }
 
     @Override
     public boolean addBytesFromByteBuf(ByteBuf in) {
         switch (currentState) {
-            case readPathSize:
-                pathSize = CommonReadWriteOperations.readIntHeader(in, buf);
-                if (pathSize == -1)
+            case readParentId:
+                parentId = CommonReadWriteOperations.readLongHeader(in, buf);
+                if (parentId == -1)
                     break;
-                CommonReadWriteOperations.ensureCapacity(buf, pathSize);
-                currentState = state.readPath;
+                currentState = state.readNameSize;
+            case readNameSize:
+                nameSize = CommonReadWriteOperations.readIntHeader(in, buf);
+                if (nameSize == -1)
+                    break;
+                CommonReadWriteOperations.ensureCapacity(buf, nameSize);
+                currentState = state.readName;
 
-            case readPath:
-                path = CommonReadWriteOperations.readString(in, pathSize, buf);
-                if (path == null)
+            case readName:
+                name = CommonReadWriteOperations.readString(in, nameSize, buf);
+                if (name == null)
                     break;
                 currentState = state.readFileSize;
             case readFileSize:
@@ -52,8 +59,9 @@ public class UploadFileRequestBuilder implements RequestBuilder {
                 if (fileSize == -1)
                     break;
                 request = new UploadFileRequest();
-                request.setPath(path);
+                request.setParentId(parentId);
                 request.setFileSize(fileSize);
+                request.setName(name);
                 currentState = state.completed;
                 return true;
 

@@ -36,7 +36,7 @@ public class FileOperationsServiceImpl implements FileOperationsService {
 
     @Override
     public ByteUploadOperation uploadFile(UploadFileRequest request) {
-        File file = navigationService.createFile(request.getPath(), request.getUser());
+        File file = navigationService.createFile(request.getParentId(), request.getName(), request.getUser());
         file.setSize(request.getFileSize());
         try {
             repository.updateFile(file);
@@ -48,28 +48,28 @@ public class FileOperationsServiceImpl implements FileOperationsService {
 
     @Override
     public ByteDownloadOperation downloadFile(DownloadFileRequest request) {
-        return new FileDownloadOperation(navigationService.getFileByPath(request.getPath(), request.getUser()));
+        return new FileDownloadOperation(navigationService.accessFileById(request.getId(), request.getUser()));
     }
 
     @Override
     public List<FileDto> getFiles(FilesListRequest request) {
-        DirectoryWithAccessInfo directory = navigationService.findDirectoryWithAccessInfoByPath(request.getPath(), request.getUser());
+        DirectoryWithAccessInfo directory = navigationService.findDirectoryWithAccessInfoById(request.getId(), request.getUser());
         List<FileDto> list = new ArrayList<>();
         Set<Directory> subDirs = directory.getDirectory().getSubDirs();
         if (directory.isUserAuthorized())
             subDirs.stream()
-                    .map(t -> new FileDto(t.getName(), true, 0, true))
+                    .map(t -> new FileDto(t.getId(), t.getName(), true, 0, true))
                     .forEach(list::add);
         else
             subDirs.stream()
                     .filter(dir -> dir.getOwner().contains(request.getUser()))
-                    .map(t -> new FileDto(t.getName(), true, 0, true))
+                    .map(t -> new FileDto(t.getId(), t.getName(), true, 0, true))
                     .forEach(list::add);
         Set<File> files = directory.getDirectory().getFiles();
         if (directory.isUserAuthorized())
             files
                     .stream()
-                    .map(t -> new FileDto(t.getName(), false, t.getSize(), t.isComplete()))
+                    .map(t -> new FileDto(t.getId(), t.getName(), false, t.getSize(), t.isComplete()))
                     .forEach(list::add);
         return list;
     }

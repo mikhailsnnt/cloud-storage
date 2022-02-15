@@ -2,6 +2,8 @@ package com.sainnt.server.dao;
 
 import com.sainnt.server.entity.Directory;
 
+import java.util.Optional;
+
 public interface DirectoryRepository {
 
     Directory loadRootDirectory() throws DaoException;
@@ -11,4 +13,6 @@ public interface DirectoryRepository {
     void deleteDirectory(Directory dir) throws DaoException;
 
     void updateDirectory(Directory dir) throws DaoException;
+
+    Optional<Directory> loadById(long id) throws DaoException;
 }

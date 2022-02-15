@@ -6,5 +6,5 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class DeleteFileRequest extends Request {
-    private String path;
+    private long id;
 }

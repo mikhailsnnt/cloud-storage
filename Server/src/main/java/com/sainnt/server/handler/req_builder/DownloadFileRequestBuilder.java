@@ -3,11 +3,11 @@ package com.sainnt.server.handler.req_builder;
 import com.sainnt.server.dto.request.DownloadFileRequest;
 import com.sainnt.server.dto.request.Request;
 
-public class DownloadFileRequestBuilder extends OneStringRequestBuilder {
+public class DownloadFileRequestBuilder extends IdRequestBuilder {
     @Override
-    protected Request formRequest(String str) {
+    protected Request formRequest(long id) {
         DownloadFileRequest request = new DownloadFileRequest();
-        request.setPath(str);
+        request.setId(id);
         return request;
     }
 }

@@ -3,11 +3,11 @@ package com.sainnt.server.handler.req_builder;
 import com.sainnt.server.dto.request.FilesListRequest;
 import com.sainnt.server.dto.request.Request;
 
-public class FilesListRequestBuilder extends OneStringRequestBuilder {
+public class FilesListRequestBuilder extends IdRequestBuilder {
     @Override
-    protected Request formRequest(String str) {
+    protected Request formRequest(long id) {
         FilesListRequest request = new FilesListRequest();
-        request.setPath(str);
+        request.setId(id);
         return request;
     }
 }

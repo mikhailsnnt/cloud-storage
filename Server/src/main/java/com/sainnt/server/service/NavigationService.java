@@ -8,11 +8,16 @@ import com.sainnt.server.entity.User;
 import java.util.Set;
 
 public interface NavigationService {
-    Directory findDirectoryByPath(String path, User user);
+    Directory accessDirectoryByPath(String path, User user);
+
+
+    Directory accessDirectoryById(long id, User user);
 
     DirectoryWithAccessInfo findDirectoryWithAccessInfoByPath(String path, User user);
 
-    Directory createDirectory(String path, User user);
+    DirectoryWithAccessInfo findDirectoryWithAccessInfoById(long id, User user);
+
+    void createDirectory(long parentId, String path, User user);
 
     void deleteDirectory(String path, User user);
 
@@ -22,14 +27,15 @@ public interface NavigationService {
 
     Set<File> getFiles(String path, User user);
 
-    File getFileByPath(String path, User user);
+    File accessFileByPath(String path, User user);
 
-    File createFile(String path, User user);
+    File accessFileById(long id, User user);
 
-    void deleteFile(String path, User user);
+    File createFile(long parentId, String path, User user);
+
+    void deleteFile(long id, User user);
 
     void renameFile(String path, User user, String newName);
 
     void updateFileEntity(File file);
-
 }

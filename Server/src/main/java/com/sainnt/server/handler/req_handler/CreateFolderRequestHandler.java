@@ -16,7 +16,7 @@ public class CreateFolderRequestHandler extends SimpleChannelInboundHandler<Crea
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, CreateDirectoryRequest request) {
-        service.createDirectory(request.getPath(), request.getUser());
+        service.createDirectory(request.getParentId(), request.getName(), request.getUser());
         CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_OP_CREATED_DIR);
     }
 }

@@ -8,6 +8,8 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class DirectoryRepositoryImpl implements DirectoryRepository {
     @Override
@@ -20,7 +22,7 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             transaction.commit();
             return rootDir;
         } catch (Exception e) {
-            if(transaction!=null)
+            if (transaction != null)
                 transaction.rollback();
             throw new DaoException(e);
         }
@@ -67,6 +69,23 @@ public class DirectoryRepositoryImpl implements DirectoryRepository {
             transaction = session.beginTransaction();
             session.update(dir);
             transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
+            throw new DaoException(e);
+        }
+    }
+
+    @Override
+    public Optional<Directory> loadById(long id) throws DaoException {
+
+        Transaction transaction = null;
+        try {
+            Session session = HibernateUtil.getCurrentSession();
+            transaction = session.beginTransaction();
+            Directory directory = session.get(Directory.class, id);
+            transaction.commit();
+            return Optional.ofNullable(directory);
         } catch (Exception e) {
             if (transaction != null)
                 transaction.rollback();

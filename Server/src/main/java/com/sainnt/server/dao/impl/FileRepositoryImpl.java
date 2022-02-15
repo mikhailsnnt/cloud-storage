@@ -9,16 +9,38 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class FileRepositoryImpl implements FileRepository {
     @Override
-    public void saveFile(File file) throws DaoException {
+    public Optional<File> getFile(long id) throws DaoException {
+        Transaction transaction = null;
         try {
             Session session = HibernateUtil.getCurrentSession();
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
+            File file = session.get(File.class, id);
+            transaction.commit();
+            return Optional.ofNullable(file);
+        } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
+            throw new DaoException(e);
+        }
+    }
+
+    @Override
+    public void saveFile(File file) throws DaoException {
+        Transaction transaction = null;
+        try {
+            Session session = HibernateUtil.getCurrentSession();
+            transaction = session.beginTransaction();
             session.save(file);
             transaction.commit();
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             throw new DaoException(e);
         }
     }
@@ -35,7 +57,7 @@ public class FileRepositoryImpl implements FileRepository {
             session.update(parentDirectory);
             transaction.commit();
         } catch (Exception e) {
-            if(transaction != null)
+            if (transaction != null)
                 transaction.rollback();
             throw new DaoException(e);
         }
@@ -44,12 +66,15 @@ public class FileRepositoryImpl implements FileRepository {
 
     @Override
     public void updateFile(File file) throws DaoException {
+        Transaction transaction = null;
         try {
             Session session = HibernateUtil.getCurrentSession();
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.update(file);
             transaction.commit();
         } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
             throw new DaoException(e);
         }
     }

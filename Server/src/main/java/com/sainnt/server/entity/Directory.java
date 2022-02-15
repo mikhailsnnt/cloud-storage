@@ -18,7 +18,7 @@ import java.util.Set;
 public class Directory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
     private String name;
 
     @ManyToMany(fetch = FetchType.LAZY)
