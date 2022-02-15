@@ -1,6 +1,7 @@
 package com.sainnt.views.treeview.remote;
 
 import com.sainnt.files.FileRepresentation;
+import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.CloudClient;
 import com.sainnt.views.treeview.FileTreeItem;
 import javafx.scene.control.Alert;
@@ -9,7 +10,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputDialog;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class RemoteFileTreeItem extends FileTreeItem {
     public RemoteFileTreeItem(FileRepresentation fileRepresentation) {
@@ -27,12 +27,12 @@ public class RemoteFileTreeItem extends FileTreeItem {
             MenuItem renameItem = new MenuItem("Rename");
             renameItem.setOnAction(actionEvent -> startEdit.run());
             MenuItem deleteItem = new MenuItem("Delete");
-            deleteItem.setOnAction(actionEvent -> CloudClient.getClient().deleteFileRequest(getValue().getPath()));
-            return new ContextMenu(renameItem,deleteItem);
+            deleteItem.setOnAction(actionEvent -> CloudClient.getClient().deleteFileRequest(((RemoteFileRepresentation) getValue()).getId()));
+            return new ContextMenu(renameItem, deleteItem);
         } else {
             MenuItem refreshItem = new MenuItem("Refresh");
-            refreshItem.setOnAction(actionEvent -> CloudClient.getClient().requestChildrenFiles(getValue().getPath(), getValue().getChildren()));
-            MenuItem createItem  = new MenuItem("Create directory");
+            refreshItem.setOnAction(actionEvent -> CloudClient.getClient().requestChildrenFiles(((RemoteFileRepresentation) getValue()).getId()));
+            MenuItem createItem = new MenuItem("Create directory");
             createItem.setOnAction(actionEvent -> {
                 TextInputDialog dialog = new TextInputDialog();
                 dialog.setTitle("Create directory");
@@ -45,20 +45,20 @@ public class RemoteFileTreeItem extends FileTreeItem {
             MenuItem renameItem = new MenuItem("Rename");
             renameItem.setOnAction(actionEvent -> startEdit.run());
             MenuItem deleteItem = new MenuItem("Delete");
-            deleteItem.setOnAction(actionEvent -> CloudClient.getClient().deleteDirectoryRequest(getValue().getPath()));
-            return new ContextMenu(refreshItem,createItem,renameItem,deleteItem);
+            deleteItem.setOnAction(actionEvent -> CloudClient.getClient().deleteDirectoryRequest(((RemoteFileRepresentation) getValue()).getId()));
+            return new ContextMenu(refreshItem, createItem, renameItem, deleteItem);
         }
     }
-    private boolean createRemoteDirectory(String name){
-        if (getValue().getChildren().stream().anyMatch(t->t.getName().equals(name)))
-        {
+
+    private boolean createRemoteDirectory(String name) {
+        if (getValue().getChildren().stream().anyMatch(t -> t.getName().equals(name))) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setHeaderText( "Could not create directory");
-            alert.setContentText("Directory with name \""+name+"\" already exists");
+            alert.setHeaderText("Could not create directory");
+            alert.setContentText("Directory with name \"" + name + "\" already exists");
             alert.showAndWait();
             return false;
         }
-        CloudClient.getClient().createRemoteDirectory(getValue().getPath()+"/"+name);
+        CloudClient.getClient().createRemoteDirectory(((RemoteFileRepresentation) getValue()).getId(), name);
         return true;
     }
 }
