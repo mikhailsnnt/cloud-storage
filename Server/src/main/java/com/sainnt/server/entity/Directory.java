@@ -6,6 +6,7 @@ import lombok.ToString;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -17,7 +18,7 @@ import java.util.Set;
 public class Directory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
     private String name;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -30,7 +31,7 @@ public class Directory {
             }
     )
     @ToString.Exclude
-    private Set<User> owner;
+    private Set<User> owner = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
@@ -38,11 +39,11 @@ public class Directory {
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     @ToString.Exclude
-    private Set<Directory> subDirs;
+    private Set<Directory> subDirs = new HashSet<>();
 
-    @OneToMany(mappedBy = "parentDirectory", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
+    @OneToMany(mappedBy = "parentDirectory", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE}, orphanRemoval = true)
     @ToString.Exclude
-    private Set<File> files;
+    private Set<File> files = new HashSet<>();
 
 
     @Override

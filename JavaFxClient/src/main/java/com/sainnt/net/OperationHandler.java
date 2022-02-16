@@ -70,44 +70,44 @@ public class OperationHandler extends ByteToMessageDecoder {
 
     private void handleFileUpload(ByteBuf byteBuf) {
         byteBuf.markReaderIndex();
+        if (byteBuf.readableBytes()<8)
+            return;
+        long dirId = byteBuf.readLong();
         if (byteBuf.readableBytes() < 4) {
             byteBuf.resetReaderIndex();
             return;
         }
-        int pathSize = byteBuf.readInt();
-        if (byteBuf.readableBytes() < pathSize) {
+        int nameSize = byteBuf.readInt();
+        if (byteBuf.readableBytes() < nameSize) {
             byteBuf.resetReaderIndex();
             return;
         }
-        String path = byteBuf.readCharSequence(pathSize, StandardCharsets.UTF_8).toString();
-        client.handleFileUploadResponse(path);
+        String fileName = byteBuf.readCharSequence(nameSize, StandardCharsets.UTF_8).toString();
+        client.handleFileUploadResponse(dirId,fileName);
         operationCode = -1;
     }
 
     private void handleFilesListRequest(ByteBuf byteBuf) {
         byteBuf.markReaderIndex();
-        if (byteBuf.readableBytes() < 4) {
+        if(byteBuf.readableBytes()<8)
+        {
             byteBuf.resetReaderIndex();
             return;
         }
-        int pathSize = byteBuf.readInt();
-        if (byteBuf.readableBytes() < pathSize) {
-            byteBuf.resetReaderIndex();
-            return;
-        }
-        String path = byteBuf.readCharSequence(pathSize, StandardCharsets.UTF_8).toString();
+        long dirId = byteBuf.readLong();
         if (byteBuf.readableBytes() < 4) {
             byteBuf.resetReaderIndex();
             return;
         }
         int filesCount = byteBuf.readInt();
-        List<FileRepresentation> ls = new ArrayList<>();
+        List<RemoteFileRepresentation> ls = new ArrayList<>();
         for (int i = 0; i < filesCount; i++) {
-            if (byteBuf.readableBytes() < 6) {
+            if (byteBuf.readableBytes() < 14) {
                 ls.clear();
                 byteBuf.resetReaderIndex();
                 return;
             }
+            long id = byteBuf.readLong();
             boolean isDir = byteBuf.readBoolean();
             boolean completed = byteBuf.readBoolean();
             int nameSize = byteBuf.readInt();
@@ -124,15 +124,15 @@ public class OperationHandler extends ByteToMessageDecoder {
                     return;
                 }
                 byteBuf.readLong();
-                ls.add(new RemoteFileRepresentation(path, filename,
+                ls.add(new RemoteFileRepresentation(id,null, filename,
                         false));
             } else
-                ls.add(new RemoteFileRepresentation(path,
+                ls.add(new RemoteFileRepresentation(id,null,
                         filename,
                         true
                 ));
         }
-        client.handleFilesRequest(path, ls);
+        client.handleFilesRequest(dirId, ls);
         operationCode = -1;
     }
 }

@@ -3,6 +3,7 @@ package com.sainnt.net;
 import com.sainnt.dto.SignInResult;
 import com.sainnt.dto.SignUpResult;
 import com.sainnt.files.FileRepresentation;
+import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.handler.LoginHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -19,12 +20,13 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 @Slf4j
 public class CloudClient {
-    private final HashMap<String, ObservableList<FileRepresentation>> listFilesRequests = new HashMap<>();
+    private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
     private boolean connected = false;
     private static CloudClient client;
     private final HashMap<String, File> fileUploadRequests = new HashMap<>();
@@ -168,7 +170,7 @@ public class CloudClient {
         channel.pipeline().addLast(new LoginHandler(signInResultConsumer, signUpResultConsumer));
     }
 
-    public void requestChildrenFiles(String path, ObservableList<FileRepresentation> children) {
+    public void requestChildrenFiles(long id) {
         if (!connected) {
             log.info("Files list request denied, not connected to server");
             return;
@@ -176,20 +178,18 @@ public class CloudClient {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                ByteBuf buf = channel.alloc().buffer(8 + path.length());
+                ByteBuf buf = channel.alloc().buffer(12);
                 buf.writeInt(23);
-                buf.writeInt(path.length());
-                buf.writeBytes(path.getBytes(StandardCharsets.UTF_8));
+                buf.writeLong(id);
                 channel.writeAndFlush(buf).sync();
                 return null;
             }
         };
-        listFilesRequests.put(path, children);
         Thread thread = new Thread(task);
         thread.start();
     }
 
-    public void createRemoteDirectory(String path) {
+    public void createRemoteDirectory(long parentId, String name) {
         if (!connected) {
             log.info("Create remote directory denied, not connected to server");
             return;
@@ -197,10 +197,11 @@ public class CloudClient {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
-                ByteBuf buf = channel.alloc().buffer(8 + path.length());
+                ByteBuf buf = channel.alloc().buffer(16 + name.length());
                 buf.writeInt(20);
-                buf.writeInt(path.length());
-                buf.writeBytes(path.getBytes(StandardCharsets.UTF_8));
+                buf.writeLong(parentId);
+                buf.writeInt(name.length());
+                buf.writeBytes(name.getBytes(StandardCharsets.UTF_8));
                 channel.writeAndFlush(buf);
                 return null;
             }
@@ -209,13 +210,18 @@ public class CloudClient {
         thread.start();
     }
 
-    public void handleFilesRequest(String path, Collection<FileRepresentation> files) {
-        ObservableList<FileRepresentation> filesDestination = listFilesRequests.get(path);
+    public void handleFilesRequest(long id, Collection<RemoteFileRepresentation> files) {
+        RemoteFileRepresentation parent = idToRemoteFile.get(id);
+        ObservableList<FileRepresentation> filesDestination = parent.getChildren();
         filesDestination.clear();
-        filesDestination.addAll(files);
+        files.forEach(file -> {
+            file.setParent(parent);
+            filesDestination.add(file);
+            idToRemoteFile.put(file.getId(), file);
+        });
     }
 
-    public void uploadFile(String path, File file) {
+    public void uploadFile(long dirId, String name, File file) {
         if (!connected) {
             log.info("File upload declined, not connected to server");
             return;
@@ -223,13 +229,14 @@ public class CloudClient {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                ByteBuf buf = channel.alloc().buffer(16 + path.length());
+                ByteBuf buf = channel.alloc().buffer(24+name.length());
                 buf.writeInt(21);
-                buf.writeInt(path.length());
-                buf.writeBytes(path.getBytes(StandardCharsets.UTF_8));
+                buf.writeLong(dirId);
+                buf.writeInt(name.length());
+                buf.writeBytes(name.getBytes(StandardCharsets.UTF_8));
                 buf.writeLong(file.length());
                 channel.writeAndFlush(buf).sync();
-                fileUploadRequests.put(path, file);
+                fileUploadRequests.put(dirId + "/" + name, file);
                 return null;
             }
         };
@@ -237,28 +244,27 @@ public class CloudClient {
         thread.start();
     }
 
-    public void handleFileUploadResponse(String remotePath) {
-        File file = fileUploadRequests.get(remotePath);
+    public void handleFileUploadResponse(long dirId, String name) {
+        File file = fileUploadRequests.get(dirId + "/" + name);
         FileRegion fileRegion = new DefaultFileRegion(file, 0, file.length());
         channel.writeAndFlush(fileRegion);
     }
 
-    public void renameFileRequest(String path, String name) {
+    public void renameFileRequest(long id, String name) {
         // Not implemented on server side yet
     }
 
-    public void deleteFileRequest(String path) {
-        if(!connected){
+    public void deleteFileRequest(long fid) {
+        if (!connected) {
             log.info("File delete declined, not connected to server");
             return;
         }
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
-                ByteBuf buf = channel.alloc().buffer(8 + path.length());
+                ByteBuf buf = channel.alloc().buffer(12);
                 buf.writeInt(22);
-                buf.writeInt(path.length());
-                buf.writeBytes(path.getBytes(StandardCharsets.UTF_8));
+                buf.writeLong(fid);
                 channel.writeAndFlush(buf);
                 return null;
             }
@@ -268,7 +274,11 @@ public class CloudClient {
 
     }
 
-    public void deleteDirectoryRequest(String path) {
+    public void deleteDirectoryRequest(long id) {
         // Not implemented on server side yet
+    }
+
+    public void addRemoteFileRepresentation(RemoteFileRepresentation item) {
+        idToRemoteFile.put(item.getId(), item);
     }
 }

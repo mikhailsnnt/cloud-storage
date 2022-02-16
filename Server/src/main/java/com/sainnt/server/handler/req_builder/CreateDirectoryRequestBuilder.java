@@ -4,12 +4,10 @@ import com.sainnt.server.dto.request.CreateDirectoryRequest;
 import com.sainnt.server.dto.request.Request;
 
 
-public class CreateDirectoryRequestBuilder extends OneStringRequestBuilder {
+public class CreateDirectoryRequestBuilder extends IdAndStringRequestBuilder {
 
     @Override
-    protected Request formRequest(String str) {
-        CreateDirectoryRequest req = new CreateDirectoryRequest();
-        req.setPath(str);
-        return req;
+    protected Request formRequest(long id, String str) {
+        return new CreateDirectoryRequest(id,str);
     }
 }

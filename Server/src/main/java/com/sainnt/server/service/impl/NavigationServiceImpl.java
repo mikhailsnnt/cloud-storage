@@ -3,6 +3,7 @@ package com.sainnt.server.service.impl;
 import com.sainnt.server.dao.DaoException;
 import com.sainnt.server.dao.DirectoryRepository;
 import com.sainnt.server.dao.FileRepository;
+import com.sainnt.server.dto.DirectoryWithAccessInfo;
 import com.sainnt.server.entity.Directory;
 import com.sainnt.server.entity.File;
 import com.sainnt.server.entity.User;
@@ -30,19 +31,33 @@ public class NavigationServiceImpl implements NavigationService {
     }
 
     @Override
-    public Directory findDirectoryByPath(String path, User user) {
+    public Directory accessDirectoryByPath(String path, User user) {
+        DirectoryWithAccessInfo dir = findDirectoryWithAccessInfoByPath(path, user);
+        if (!dir.isUserAuthorized())
+            throw new AccessDeniedException(user.getUsername(), path);
+        return dir.getDirectory();
+    }
+
+    @Override
+    public Directory accessDirectoryById(long id, User user) {
+        DirectoryWithAccessInfo dir = findDirectoryWithAccessInfoById(id, user);
+        if (!dir.isUserAuthorized())
+            throw new AccessDeniedException(user.getUsername(), "Directory id " + id);
+        return dir.getDirectory();
+    }
+
+    @Override
+    public DirectoryWithAccessInfo findDirectoryWithAccessInfoByPath(String path, User user) {
         Directory curDir;
         try {
             curDir = dirRepository.loadRootDirectory();
-        } catch (DaoException exception) {
-            log.error("Loading dir entity exception", exception);
+        } catch (DaoException e) {
+            log.error("Loading root directory  exception", e);
             throw new InternalServerError();
         }
         boolean userAuthorized = curDir.getOwner().contains(user);
         if (path.isEmpty()) {
-            if (!userAuthorized)
-                throw new AccessDeniedException(user.getUsername(), path);
-            return curDir;
+            return new DirectoryWithAccessInfo(curDir, userAuthorized);
         }
         for (String dirName : path.split("/")) {
             curDir = curDir
@@ -54,20 +69,28 @@ public class NavigationServiceImpl implements NavigationService {
             if (!userAuthorized)
                 userAuthorized = curDir.getOwner().contains(user);
         }
-        if (!userAuthorized)
-            throw new AccessDeniedException(user.getUsername(), path);
-        return curDir;
+        return new DirectoryWithAccessInfo(curDir, userAuthorized);
     }
 
     @Override
-    public Directory createDirectory(String path, User user) {
-        String parentDirectory = getParentDirectory(path);
-        String dirName = getFilename(path);
+    public DirectoryWithAccessInfo findDirectoryWithAccessInfoById(long id, User user) {
+        Directory dir;
+        try {
+            dir = dirRepository.loadById(id).orElseThrow(() -> new DirectoryNotFoundException("Directory id: " + id));
+        } catch (DaoException e) {
+            log.error("Loading directory  by id exception", e);
+            throw new InternalServerError();
+        }
+        return new DirectoryWithAccessInfo(dir, hasRightsOnDirectory(dir, user));
+    }
+
+    @Override
+    public void createDirectory(long parentId, String dirName, User user) {
         if (invalidDirectoryName(dirName))
             throw new InvalidFileNameException(dirName);
-        Directory dir = findDirectoryByPath(parentDirectory, user);
+        Directory dir = accessDirectoryById(parentId, user);
         if (fileOrDirExists(dir, dirName))
-            throw new DirectoryAlreadyExists(path);
+            throw new DirectoryAlreadyExists(dirName);
         Directory newDir = new Directory();
         newDir.setName(dirName);
         newDir.setOwner(Set.of(user));
@@ -80,12 +103,11 @@ public class NavigationServiceImpl implements NavigationService {
         }
         dir.getSubDirs().add(newDir);
         updateDirEntity(dir);
-        return newDir;
     }
 
     @Override
     public void deleteDirectory(String path, User user) {
-        Directory dir = findDirectoryByPath(path, user);
+        Directory dir = accessDirectoryByPath(path, user);
         deleteDirectory(dir);
     }
 
@@ -94,7 +116,7 @@ public class NavigationServiceImpl implements NavigationService {
         if (invalidDirectoryName(newName))
             throw new InvalidFileNameException(newName);
         String parentPath = getParentDirectory(path);
-        Directory parendDir = findDirectoryByPath(parentPath, user);
+        Directory parendDir = accessDirectoryByPath(parentPath, user);
         if (fileOrDirExists(parendDir, newName))
             throw new FileAlreadyExistsException(path + "/" + newName);
         String oldName = getFilename(path);
@@ -109,21 +131,21 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     public Set<Directory> getSubDirectories(String path, User user) {
-        return findDirectoryByPath(path, user).getSubDirs();
+        return accessDirectoryByPath(path, user).getSubDirs();
     }
 
     @Override
     public Set<File> getFiles(String path, User user) {
-        return findDirectoryByPath(path, user).getFiles();
+        return accessDirectoryByPath(path, user).getFiles();
     }
 
     @Override
-    public File getFileByPath(String path, User user) {
+    public File accessFileByPath(String path, User user) {
         String parentDirPath = getParentDirectory(path);
         String filename = getFilename(path);
         if (invalidFilename(filename))
             throw new InvalidFileNameException(filename);
-        Directory dir = findDirectoryByPath(parentDirPath, user);
+        Directory dir = accessDirectoryByPath(parentDirPath, user);
         return dir
                 .getFiles()
                 .stream()
@@ -133,14 +155,26 @@ public class NavigationServiceImpl implements NavigationService {
     }
 
     @Override
-    public File createFile(String path, User user) {
-        String parentDirectory = getParentDirectory(path);
-        String fileName = getFilename(path);
+    public File accessFileById(long id, User user) {
+        File file;
+        try {
+            file = fileRepository.getFile(id).orElseThrow(() -> new FileNotFoundException("File id: " + id));
+        } catch (DaoException e) {
+            log.error("Error loading file by id {}", id, e);
+            throw new InternalServerError();
+        }
+        if (!file.getOwner().equals(user) && !hasRightsOnDirectory(file.getParentDirectory(), user))
+            throw new AccessDeniedException(user.getUsername(), "File id: " + id);
+        return file;
+    }
+
+    @Override
+    public File createFile(long parentId, String fileName, User user) {
         if (invalidFilename(fileName))
             throw new InvalidFileNameException(fileName);
-        Directory dir = findDirectoryByPath(parentDirectory, user);
+        Directory dir = accessDirectoryById(parentId, user);
         if (fileOrDirExists(dir, fileName))
-            throw new FileAlreadyExistsException(path);
+            throw new FileAlreadyExistsException(fileName);
         File file = new File();
         file.setName(fileName);
         file.setOwner(user);
@@ -159,16 +193,16 @@ public class NavigationServiceImpl implements NavigationService {
 
 
     @Override
-    public void deleteFile(String path, User user) {
+    public void deleteFile(long id, User user) {
         try {
-            File file = getFileByPath(path, user);
+            File file = accessFileById(id, user);
             fileRepository.deleteFile(file);
             Files.deleteIfExists(Path.of("files/" + file.getId()));
         } catch (DaoException exception) {
-            log.error("Deleting file entity exception", exception);
+            log.error("Deleting file[{}] entity exception", id, exception);
             throw new InternalServerError();
         } catch (IOException exception) {
-            log.info("Deleting file  exception", exception);
+            log.info("Deleting file[{}]  exception", id, exception);
             throw new InternalServerError();
         }
     }
@@ -178,7 +212,7 @@ public class NavigationServiceImpl implements NavigationService {
         if (invalidFilename(newName))
             throw new InvalidFileNameException(newName);
         String parentPath = getParentDirectory(path);
-        Directory parendDir = findDirectoryByPath(parentPath, user);
+        Directory parendDir = accessDirectoryByPath(parentPath, user);
         if (fileOrDirExists(parendDir, newName))
             throw new FileAlreadyExistsException(path + "/" + newName);
         String oldName = getFilename(path);
@@ -248,5 +282,14 @@ public class NavigationServiceImpl implements NavigationService {
 
     private String getFilename(String path) {
         return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    private boolean hasRightsOnDirectory(Directory directory, User user) {
+        boolean isAuthenticated = false;
+        while (!isAuthenticated && directory != null) {
+            isAuthenticated = directory.getOwner().contains(user);
+            directory = directory.getParent();
+        }
+        return isAuthenticated;
     }
 }

@@ -10,21 +10,17 @@ import java.nio.charset.StandardCharsets;
 public class FileDtoResponseEncoder extends MessageToByteEncoder<FileDto> {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, FileDto fileDto, ByteBuf byteBuf) {
-        //Protocol:
-        // isDir-0/1
-        //completed-0/1
-        //name.size
-        //name
-        //File? size
         ByteBuf buf;
         if (fileDto.isDirectory()) {
-            buf = channelHandlerContext.alloc().buffer(6 + fileDto.getName().length());
+            buf = channelHandlerContext.alloc().buffer(14 + fileDto.getName().length());
+            buf.writeLong(fileDto.getId());
             buf.writeBoolean(true);
             buf.writeBoolean(fileDto.isCompleted());
             buf.writeInt(fileDto.getName().length());
             buf.writeBytes(fileDto.getName().getBytes(StandardCharsets.UTF_8));
         } else {
-            buf = channelHandlerContext.alloc().buffer(14 + fileDto.getName().length());
+            buf = channelHandlerContext.alloc().buffer(22 + fileDto.getName().length());
+            buf.writeLong(fileDto.getId());
             buf.writeBoolean(false);
             buf.writeBoolean(fileDto.isCompleted());
             buf.writeInt(fileDto.getName().length());

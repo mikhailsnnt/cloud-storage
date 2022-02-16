@@ -2,6 +2,7 @@ package com.sainnt.server.service.impl;
 
 import com.sainnt.server.dao.DaoException;
 import com.sainnt.server.dao.FileRepository;
+import com.sainnt.server.dto.DirectoryWithAccessInfo;
 import com.sainnt.server.dto.FileDto;
 import com.sainnt.server.dto.request.DownloadFileRequest;
 import com.sainnt.server.dto.request.FilesListRequest;
@@ -35,7 +36,7 @@ public class FileOperationsServiceImpl implements FileOperationsService {
 
     @Override
     public ByteUploadOperation uploadFile(UploadFileRequest request) {
-        File file = navigationService.createFile(request.getPath(), request.getUser());
+        File file = navigationService.createFile(request.getParentId(), request.getName(), request.getUser());
         file.setSize(request.getFileSize());
         try {
             repository.updateFile(file);
@@ -47,26 +48,29 @@ public class FileOperationsServiceImpl implements FileOperationsService {
 
     @Override
     public ByteDownloadOperation downloadFile(DownloadFileRequest request) {
-        return new FileDownloadOperation(navigationService.getFileByPath(request.getPath(), request.getUser()));
+        return new FileDownloadOperation(navigationService.accessFileById(request.getId(), request.getUser()));
     }
 
     @Override
     public List<FileDto> getFiles(FilesListRequest request) {
-        Directory dir = navigationService.findDirectoryByPath(request.getPath(), request.getUser());
+        DirectoryWithAccessInfo directory = navigationService.findDirectoryWithAccessInfoById(request.getId(), request.getUser());
         List<FileDto> list = new ArrayList<>();
-        Set<Directory> subDirs = dir.getSubDirs();
-        if (subDirs != null)
+        Set<Directory> subDirs = directory.getDirectory().getSubDirs();
+        if (directory.isUserAuthorized())
             subDirs.stream()
-                    .filter(t -> t.getOwner().contains(request.getUser()))
-                    .map(t -> new FileDto(t.getName(), true, 0, true))
+                    .map(t -> new FileDto(t.getId(), t.getName(), true, 0, true))
                     .forEach(list::add);
-        Set<File> files = dir.getFiles();
-        if (files != null) {
+        else
+            subDirs.stream()
+                    .filter(dir -> dir.getOwner().contains(request.getUser()))
+                    .map(t -> new FileDto(t.getId(), t.getName(), true, 0, true))
+                    .forEach(list::add);
+        Set<File> files = directory.getDirectory().getFiles();
+        if (directory.isUserAuthorized())
             files
                     .stream()
-                    .map(t -> new FileDto(t.getName(), false, t.getSize(), t.isComplete()))
+                    .map(t -> new FileDto(t.getId(), t.getName(), false, t.getSize(), t.isComplete()))
                     .forEach(list::add);
-        }
         return list;
     }
 

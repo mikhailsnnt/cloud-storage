@@ -7,14 +7,16 @@ import javafx.collections.ObservableList;
 import java.io.File;
 
 public class RemoteFileRepresentation implements FileRepresentation {
-    private final String path;
+    private final long id;
+    private  RemoteFileRepresentation parent;
     private final String name;
     private boolean firstTimeLoad = true;
     private final boolean isDirectory;
     private final ObservableList<FileRepresentation> children;
 
-    public RemoteFileRepresentation(String path, String name, boolean isDirectory) {
-        this.path = path;
+    public RemoteFileRepresentation(long id, RemoteFileRepresentation parent, String name, boolean isDirectory) {
+        this.id = id;
+        this.parent = parent;
         this.name = name;
         this.isDirectory = isDirectory;
         children = FXCollections.observableArrayList();
@@ -22,9 +24,9 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     @Override
     public String getPath() {
-        if (path.isBlank())
+        if(parent == null)
             return name;
-        return path + "/" + name;
+        return parent.getPath() + "/" + name;
     }
 
     @Override
@@ -50,19 +52,31 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     @Override
     public void copyFileToDirectory(File file) {
-        CloudClient.getClient().uploadFile(getPath() + "/" + file.getName(), file);
+        CloudClient.getClient().uploadFile(getId(),file.getName(), file);
     }
 
     @Override
     public void loadContent() {
         if (firstTimeLoad && isDirectory) {
-            CloudClient.getClient().requestChildrenFiles(getPath(), children);
+            CloudClient.getClient().requestChildrenFiles(getId());
             firstTimeLoad = false;
         }
     }
 
     @Override
     public void setName(String name) {
-        CloudClient.getClient().renameFileRequest(getPath(), name);
+        CloudClient.getClient().renameFileRequest(getId(), name);
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setParent(RemoteFileRepresentation parent) {
+        this.parent = parent;
+    }
+
+    public RemoteFileRepresentation getParent() {
+        return parent;
     }
 }
