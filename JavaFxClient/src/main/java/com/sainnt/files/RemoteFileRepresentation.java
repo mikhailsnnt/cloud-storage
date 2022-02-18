@@ -8,7 +8,7 @@ import java.io.File;
 
 public class RemoteFileRepresentation implements FileRepresentation {
     private final long id;
-    private  RemoteFileRepresentation parent;
+    private RemoteFileRepresentation parent;
     private final String name;
     private boolean firstTimeLoad = true;
     private final boolean isDirectory;
@@ -24,7 +24,7 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     @Override
     public String getPath() {
-        if(parent == null)
+        if (parent == null)
             return name;
         return parent.getPath() + "/" + name;
     }
@@ -52,7 +52,7 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     @Override
     public void copyFileToDirectory(File file) {
-        CloudClient.getClient().uploadFile(getId(),file.getName(), file);
+        CloudClient.getClient().uploadFile(getId(), file);
     }
 
     @Override

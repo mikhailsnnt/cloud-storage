@@ -1,7 +1,6 @@
 package com.sainnt.observer;
 
 import com.sainnt.files.LocalFileRepresentation;
-import lombok.SneakyThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,16 +60,19 @@ public class LocalDirectoryObservable extends DirectoryObservable {
         observersToBeRemoved.add(observer);
     }
 
-    @SneakyThrows
     private void observeLoop() {
         while (true) {
-            WatchKey key = watchService.take();
-            key.pollEvents().forEach(event -> processEvent(key, event));
-            if (!key.reset()) {
-                System.out.println("Key not valid " + key.watchable());
+            try {
+                final WatchKey key = watchService.take();
+                key.pollEvents().forEach(event -> processEvent(key, event));
+                if (!key.reset()) {
+                    System.out.println("Key not valid " + key.watchable());
+                }
+                if (keyIsRemoved(key))
+                    key.cancel();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            if (keyIsRemoved(key))
-                key.cancel();
         }
     }
 
