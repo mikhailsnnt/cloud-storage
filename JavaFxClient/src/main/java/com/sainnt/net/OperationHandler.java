@@ -1,7 +1,6 @@
 package com.sainnt.net;
 
 import com.sainnt.dto.ExceptionDto;
-import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.util.CodesInfo;
 import io.netty.buffer.ByteBuf;
@@ -42,7 +41,7 @@ public class OperationHandler extends ByteToMessageDecoder {
             System.out.println("Response: " + responseCode);
             if (CodesInfo.isExceptionCode(responseCode))
                 exceptionCode = responseCode;
-            else if (responseCode == 113 || responseCode == 8) {
+            else if (responseCode != 7) {
                 operationCode = responseCode;
             }
         }
@@ -64,13 +63,21 @@ public class OperationHandler extends ByteToMessageDecoder {
             handleFilesListRequest(byteBuf);
         else if (operationCode == 8)
             handleFileUpload(byteBuf);
+        else if (operationCode == 9) {
+           operationCode = -1;
+            CloudClient.getClient().fileUploadCompleted();
+        } else if (operationCode == 112) {
+            operationCode = -1;
+            CloudClient.getClient().deleteFileCompleted();
+        }
+
 
     }
 
 
     private void handleFileUpload(ByteBuf byteBuf) {
         byteBuf.markReaderIndex();
-        if (byteBuf.readableBytes()<8)
+        if (byteBuf.readableBytes() < 8)
             return;
         long dirId = byteBuf.readLong();
         if (byteBuf.readableBytes() < 4) {
@@ -83,14 +90,19 @@ public class OperationHandler extends ByteToMessageDecoder {
             return;
         }
         String fileName = byteBuf.readCharSequence(nameSize, StandardCharsets.UTF_8).toString();
-        client.handleFileUploadResponse(dirId,fileName);
+        if(byteBuf.readableBytes()<8)
+        {
+            byteBuf.resetReaderIndex();
+            return;
+        }
+        long fid = byteBuf.readLong();
+        client.handleFileUploadResponse(dirId, fileName, fid);
         operationCode = -1;
     }
 
     private void handleFilesListRequest(ByteBuf byteBuf) {
         byteBuf.markReaderIndex();
-        if(byteBuf.readableBytes()<8)
-        {
+        if (byteBuf.readableBytes() < 8) {
             byteBuf.resetReaderIndex();
             return;
         }
@@ -124,10 +136,10 @@ public class OperationHandler extends ByteToMessageDecoder {
                     return;
                 }
                 byteBuf.readLong();
-                ls.add(new RemoteFileRepresentation(id,null, filename,
+                ls.add(new RemoteFileRepresentation(id, null, filename,
                         false));
             } else
-                ls.add(new RemoteFileRepresentation(id,null,
+                ls.add(new RemoteFileRepresentation(id, null,
                         filename,
                         true
                 ));
@@ -135,4 +147,5 @@ public class OperationHandler extends ByteToMessageDecoder {
         client.handleFilesRequest(dirId, ls);
         operationCode = -1;
     }
+
 }

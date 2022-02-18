@@ -57,18 +57,15 @@ public class OperationDecoder extends ByteToMessageDecoder {
             }
         } else
             CommonReadWriteOperations.sendIntCodeResponse(channelHandlerContext, InteractionCodes.CODE_INVALID_REQUEST);
-
-
         if (byteBuf.readableBytes() > 0)
             transferInput(channelHandlerContext, byteBuf, list);
-
     }
 
-    void transferInput(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) {
+    public void transferInput(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) {
         if (transferringOperation != null) {
             if (transferringOperation.transferBytesFromByteBuf(byteBuf)) {
-                transferringOperation = null;
                 CommonReadWriteOperations.sendIntCodeResponse(ctx, InteractionCodes.CODE_UPLOADED_SUCCESSFULLY);
+                transferringOperation = null;
             }
         }
         if (requestBuilder != null) {

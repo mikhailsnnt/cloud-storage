@@ -5,6 +5,10 @@ import com.sainnt.dto.SignUpResult;
 import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.handler.LoginHandler;
+import com.sainnt.net.requests.CreateFolderRequest;
+import com.sainnt.net.requests.DeleteFileRequest;
+import com.sainnt.net.requests.ListFilesRequest;
+import com.sainnt.net.requests.UploadFileRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -21,16 +25,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 @Slf4j
 public class CloudClient {
-    private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
-    private boolean connected = false;
     private static CloudClient client;
-    private final HashMap<String, File> fileUploadRequests = new HashMap<>();
+    private boolean connected = false;
     private EventLoopGroup workerGroup;
+    private Request currentRequest;
+    private boolean performingRequest;
+    private final BlockingQueue<Request> requestQueue = new ArrayBlockingQueue<>(15);
+    private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
 
     public synchronized static CloudClient getClient() {
         if (client == null) {
@@ -171,81 +179,54 @@ public class CloudClient {
     }
 
     public void requestChildrenFiles(long id) {
-        if (!connected) {
-            log.info("Files list request denied, not connected to server");
-            return;
+        requestQueue.add(new ListFilesRequest(id));
+        pollRequest();
+    }
+
+    private synchronized void pollRequest() {
+        if (!performingRequest && !requestQueue.isEmpty()) {
+            currentRequest = requestQueue.poll();
+            performingRequest = true;
+            currentRequest.perform(channel);
         }
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                ByteBuf buf = channel.alloc().buffer(12);
-                buf.writeInt(23);
-                buf.writeLong(id);
-                channel.writeAndFlush(buf).sync();
-                return null;
-            }
-        };
-        Thread thread = new Thread(task);
-        thread.start();
     }
 
     public void createRemoteDirectory(long parentId, String name) {
-        if (!connected) {
-            log.info("Create remote directory denied, not connected to server");
-            return;
-        }
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                ByteBuf buf = channel.alloc().buffer(16 + name.length());
-                buf.writeInt(20);
-                buf.writeLong(parentId);
-                buf.writeInt(name.length());
-                buf.writeBytes(name.getBytes(StandardCharsets.UTF_8));
-                channel.writeAndFlush(buf);
-                return null;
-            }
-        };
-        Thread thread = new Thread(task);
-        thread.start();
+        requestQueue.add(new CreateFolderRequest(name, parentId));
+        pollRequest();
     }
 
     public void handleFilesRequest(long id, Collection<RemoteFileRepresentation> files) {
-        RemoteFileRepresentation parent = idToRemoteFile.get(id);
-        ObservableList<FileRepresentation> filesDestination = parent.getChildren();
-        filesDestination.clear();
-        files.forEach(file -> {
-            file.setParent(parent);
-            filesDestination.add(file);
-            idToRemoteFile.put(file.getId(), file);
-        });
+        if (currentRequest instanceof ListFilesRequest) {
+            assert id == ((ListFilesRequest) currentRequest).getDirId();
+            RemoteFileRepresentation parent = idToRemoteFile.get(id);
+            ObservableList<FileRepresentation> filesDestination = parent.getChildren();
+            filesDestination.clear();
+            files.forEach(file -> {
+                file.setParent(parent);
+                filesDestination.add(file);
+                idToRemoteFile.put(file.getId(), file);
+            });
+            completeRequest();
+        } else
+            System.out.println("Current request is not hfr");
     }
 
-    public void uploadFile(long dirId, String name, File file) {
-        if (!connected) {
-            log.info("File upload declined, not connected to server");
-            return;
-        }
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                ByteBuf buf = channel.alloc().buffer(24+name.length());
-                buf.writeInt(21);
-                buf.writeLong(dirId);
-                buf.writeInt(name.length());
-                buf.writeBytes(name.getBytes(StandardCharsets.UTF_8));
-                buf.writeLong(file.length());
-                channel.writeAndFlush(buf).sync();
-                fileUploadRequests.put(dirId + "/" + name, file);
-                return null;
-            }
-        };
-        Thread thread = new Thread(task);
-        thread.start();
+    private void completeRequest() {
+        performingRequest = false;
+        currentRequest = null;
+        pollRequest();
     }
 
-    public void handleFileUploadResponse(long dirId, String name) {
-        File file = fileUploadRequests.get(dirId + "/" + name);
+    public void uploadFile(long dirId, File file) {
+        requestQueue.add(new UploadFileRequest(dirId, file));
+        pollRequest();
+    }
+
+    public void handleFileUploadResponse(long dirId, String name, long fileId) {
+        RemoteFileRepresentation dir = idToRemoteFile.get(dirId);
+        dir.getChildren().add(new RemoteFileRepresentation(fileId, dir, name, false));
+        File file = ((UploadFileRequest) currentRequest).getFile();
         FileRegion fileRegion = new DefaultFileRegion(file, 0, file.length());
         channel.writeAndFlush(fileRegion);
     }
@@ -254,24 +235,9 @@ public class CloudClient {
         // Not implemented on server side yet
     }
 
-    public void deleteFileRequest(long fid) {
-        if (!connected) {
-            log.info("File delete declined, not connected to server");
-            return;
-        }
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                ByteBuf buf = channel.alloc().buffer(12);
-                buf.writeInt(22);
-                buf.writeLong(fid);
-                channel.writeAndFlush(buf);
-                return null;
-            }
-        };
-        Thread thread = new Thread(task);
-        thread.start();
-
+    public void deleteFileRequest(long id) {
+        requestQueue.add(new DeleteFileRequest(id));
+        pollRequest();
     }
 
     public void deleteDirectoryRequest(long id) {
@@ -280,5 +246,22 @@ public class CloudClient {
 
     public void addRemoteFileRepresentation(RemoteFileRepresentation item) {
         idToRemoteFile.put(item.getId(), item);
+    }
+
+    public boolean isPerformingRequest() {
+        return performingRequest;
+    }
+
+    public void fileUploadCompleted() {
+        completeRequest();
+    }
+
+    public void deleteFileCompleted() {
+        if (currentRequest instanceof DeleteFileRequest request) {
+            long deletedId = request.getId();
+            RemoteFileRepresentation file = idToRemoteFile.get(deletedId);
+            file.getParent().getChildren().remove(file);
+            completeRequest();
+        }
     }
 }

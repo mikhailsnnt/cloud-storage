@@ -35,7 +35,7 @@ public class FileOperationsServiceImpl implements FileOperationsService {
     }
 
     @Override
-    public ByteUploadOperation uploadFile(UploadFileRequest request) {
+    public FileUploadOperation uploadFile(UploadFileRequest request) {
         File file = navigationService.createFile(request.getParentId(), request.getName(), request.getUser());
         file.setSize(request.getFileSize());
         try {
@@ -47,7 +47,7 @@ public class FileOperationsServiceImpl implements FileOperationsService {
     }
 
     @Override
-    public ByteDownloadOperation downloadFile(DownloadFileRequest request) {
+    public FileDownloadOperation downloadFile(DownloadFileRequest request) {
         return new FileDownloadOperation(navigationService.accessFileById(request.getId(), request.getUser()));
     }
 
