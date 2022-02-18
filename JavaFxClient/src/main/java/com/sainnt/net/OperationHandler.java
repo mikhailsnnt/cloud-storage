@@ -64,11 +64,8 @@ public class OperationHandler extends ByteToMessageDecoder {
         else if (operationCode == 8)
             handleFileUpload(byteBuf);
         else if (operationCode == 9) {
-            if (byteBuf.readableBytes() < 8)
-                return;
-            long fileId = byteBuf.readLong();
-            operationCode = -1;
-            CloudClient.getClient().fileUploadCompleted(fileId);
+           operationCode = -1;
+            CloudClient.getClient().fileUploadCompleted();
         } else if (operationCode == 112) {
             operationCode = -1;
             CloudClient.getClient().deleteFileCompleted();
@@ -93,7 +90,13 @@ public class OperationHandler extends ByteToMessageDecoder {
             return;
         }
         String fileName = byteBuf.readCharSequence(nameSize, StandardCharsets.UTF_8).toString();
-        client.handleFileUploadResponse(dirId, fileName);
+        if(byteBuf.readableBytes()<8)
+        {
+            byteBuf.resetReaderIndex();
+            return;
+        }
+        long fid = byteBuf.readLong();
+        client.handleFileUploadResponse(dirId, fileName, fid);
         operationCode = -1;
     }
 

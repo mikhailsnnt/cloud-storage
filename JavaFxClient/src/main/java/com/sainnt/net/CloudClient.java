@@ -32,14 +32,13 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class CloudClient {
-    private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
-    private boolean connected = false;
     private static CloudClient client;
-    private final HashMap<String, File> fileUploadRequests = new HashMap<>();
+    private boolean connected = false;
     private EventLoopGroup workerGroup;
     private Request currentRequest;
     private boolean performingRequest;
     private final BlockingQueue<Request> requestQueue = new ArrayBlockingQueue<>(15);
+    private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
 
     public synchronized static CloudClient getClient() {
         if (client == null) {
@@ -224,7 +223,9 @@ public class CloudClient {
         pollRequest();
     }
 
-    public void handleFileUploadResponse(long dirId, String name) {
+    public void handleFileUploadResponse(long dirId, String name, long fileId) {
+        RemoteFileRepresentation dir = idToRemoteFile.get(dirId);
+        dir.getChildren().add(new RemoteFileRepresentation(fileId, dir, name, false));
         File file = ((UploadFileRequest) currentRequest).getFile();
         FileRegion fileRegion = new DefaultFileRegion(file, 0, file.length());
         channel.writeAndFlush(fileRegion);
@@ -251,14 +252,8 @@ public class CloudClient {
         return performingRequest;
     }
 
-    public void fileUploadCompleted(long fileId) {
-        if (currentRequest instanceof UploadFileRequest request) {
-            RemoteFileRepresentation dir = idToRemoteFile.get(request.getDirId());
-            dir
-                    .getChildren()
-                    .add(new RemoteFileRepresentation(fileId, dir, request.getFile().getName(), false));
-            completeRequest();
-        }
+    public void fileUploadCompleted() {
+        completeRequest();
     }
 
     public void deleteFileCompleted() {
