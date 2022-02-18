@@ -72,6 +72,11 @@ public class FileUploadOperation implements ByteUploadOperation {
         log.info("File upload operation interrupted at {} of {} bytes", bytesRead, file.getSize());
     }
 
+    @Override
+    public long getUploadedId() {
+        return file.getId();
+    }
+
     public void completeFileUploadOperation() {
         file.setComplete(true);
         try {

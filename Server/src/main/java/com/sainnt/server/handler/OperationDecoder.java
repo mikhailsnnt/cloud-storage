@@ -67,8 +67,11 @@ public class OperationDecoder extends ByteToMessageDecoder {
     void transferInput(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) {
         if (transferringOperation != null) {
             if (transferringOperation.transferBytesFromByteBuf(byteBuf)) {
+                ByteBuf resp = ctx.alloc().buffer(12);
+                resp.writeInt(InteractionCodes.CODE_UPLOADED_SUCCESSFULLY);
+                resp.writeLong(transferringOperation.getUploadedId());
+                ctx.writeAndFlush(resp);
                 transferringOperation = null;
-                CommonReadWriteOperations.sendIntCodeResponse(ctx, InteractionCodes.CODE_UPLOADED_SUCCESSFULLY);
             }
         }
         if (requestBuilder != null) {
