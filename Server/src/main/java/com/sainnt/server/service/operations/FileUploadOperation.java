@@ -73,7 +73,7 @@ public class FileUploadOperation implements ByteUploadOperation {
     }
 
     @Override
-    public long getUploadedId() {
+    public long getFileId() {
         return file.getId();
     }
 

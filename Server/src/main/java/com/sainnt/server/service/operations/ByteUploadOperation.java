@@ -7,5 +7,5 @@ public interface ByteUploadOperation {
 
     void interrupt();
 
-    long getUploadedId();
+    long getFileId();
 }
