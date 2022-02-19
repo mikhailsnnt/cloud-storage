@@ -4,7 +4,6 @@ import com.sainnt.dto.RemoteFileDto;
 import com.sainnt.exception.FileAlreadyExistsException;
 import com.sainnt.exception.FileRenamingFailedException;
 import com.sainnt.files.FileRepresentation;
-import com.sainnt.files.RemoteFileRepresentation;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
@@ -93,7 +92,7 @@ public abstract class FileCell extends TreeCell<FileRepresentation> {
         if (item == null || item.isFile())
             return false;
         // Recursive copying check:
-        if(dragboard.hasFiles())
+        if (dragboard.hasFiles())
             return (!item.getPath().startsWith(dragboard.getFiles().get(0).toString() + ""));
         return dragboard.hasContent(RemoteFileDto.dataFormat);
     }

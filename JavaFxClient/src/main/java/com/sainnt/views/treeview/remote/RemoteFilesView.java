@@ -3,7 +3,6 @@ package com.sainnt.views.treeview.remote;
 import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.CloudClient;
-import com.sainnt.views.treeview.FileCell;
 import com.sainnt.views.treeview.FilesView;
 import javafx.scene.control.TreeItem;
 

@@ -56,7 +56,7 @@ public class LocalFileCell extends FileCell {
                 dragEvent.consume();
                 return;
             }
-            CloudClient.getClient().downloadFile(remoteFile.getId(),file);
+            CloudClient.getClient().downloadFile(remoteFile.getId(), file);
             dragEvent.setDropCompleted(success);
             dragEvent.consume();
         });

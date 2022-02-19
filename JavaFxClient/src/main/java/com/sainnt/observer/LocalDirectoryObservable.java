@@ -39,7 +39,7 @@ public class LocalDirectoryObservable extends DirectoryObservable {
     @Override
     protected void startObserving(DirectoryObserver observer) {
         try {
-            File file = ((LocalFileRepresentation)observer
+            File file = ((LocalFileRepresentation) observer
                     .getDirectory())
                     .getFile();
             WatchKey key = file
@@ -88,7 +88,7 @@ public class LocalDirectoryObservable extends DirectoryObservable {
     }
 
     private Path relativeToAbsolutePath(DirectoryObserver observer, Path path) {
-        return ((LocalFileRepresentation)observer.getDirectory()).getFile().toPath().resolve(path);
+        return ((LocalFileRepresentation) observer.getDirectory()).getFile().toPath().resolve(path);
     }
 
 

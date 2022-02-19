@@ -4,11 +4,9 @@ import com.sainnt.dto.RemoteFileDto;
 import com.sainnt.net.CloudClient;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.input.DataFormat;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -50,26 +48,6 @@ public class RemoteFileRepresentation implements FileRepresentation {
         return children;
     }
 
-    public File getFile() {
-        File cachedFile = Path.of("local_cache/" + id).toFile();
-        if (!cachedFile.exists()) {
-            try {
-                if (!cachedFile.createNewFile())
-                    throw  new RuntimeException();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            CloudClient.getClient().downloadFile(id,cachedFile);
-        }
-        Path tempFile = Path.of("local_cache/temp/"+name);
-        try {
-            Files.copy(cachedFile.toPath(),tempFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return tempFile.toFile();
-    }
-
 
     @Override
     public void copyFileToDirectory(File file) {
@@ -101,7 +79,7 @@ public class RemoteFileRepresentation implements FileRepresentation {
         return parent;
     }
 
-    public RemoteFileDto getDto(){
-        return new RemoteFileDto(name,id);
+    public RemoteFileDto getDto() {
+        return new RemoteFileDto(name, id);
     }
 }

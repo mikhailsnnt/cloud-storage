@@ -4,7 +4,6 @@ import com.sainnt.dto.RemoteFileDto;
 import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.views.treeview.FileCell;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Background;
@@ -19,7 +18,7 @@ public class RemoteFileCell extends FileCell {
                 Dragboard db = startDragAndDrop(TransferMode.MOVE);
                 setBackground(Background.fill(Paint.valueOf("#26829e")));
                 ClipboardContent content = new ClipboardContent();
-                content.put(RemoteFileDto.dataFormat, ((RemoteFileRepresentation)getItem()).getDto());
+                content.put(RemoteFileDto.dataFormat, ((RemoteFileRepresentation) getItem()).getDto());
                 db.setContent(content);
                 setTextFill(Paint.valueOf("#000000"));
             }

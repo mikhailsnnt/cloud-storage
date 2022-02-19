@@ -1,7 +1,6 @@
 package com.sainnt.observer;
 
 import com.sainnt.files.FileRepresentation;
-import com.sainnt.files.LocalFileRepresentation;
 
 public interface DirectoryObserver {
     void fileAdded(FileRepresentation file);

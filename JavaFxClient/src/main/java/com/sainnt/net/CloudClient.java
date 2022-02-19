@@ -267,15 +267,14 @@ public class CloudClient {
     }
 
     public void downloadFile(long id, File file) {
-        requestQueue.add(new DownloadFileRequests(id,file));
+        requestQueue.add(new DownloadFileRequests(id, file));
         pollRequest();
     }
 
 
     public boolean handleFileDownloadPortion(ByteBuf byteBuf) {
-        if( currentRequest instanceof DownloadFileRequests requests)
-        {
-            if(fileOutputStream == null) {
+        if (currentRequest instanceof DownloadFileRequests requests) {
+            if (fileOutputStream == null) {
                 try {
                     fileOutputStream = new BufferedOutputStream(new FileOutputStream(requests.getDestination()));
                 } catch (FileNotFoundException e) {
@@ -283,10 +282,10 @@ public class CloudClient {
                 }
             }
             try {
-                int bytesToRead = (int)Math.min(downloadFileSize - bytesRead, byteBuf.readableBytes());
-                byteBuf.readBytes(fileOutputStream,bytesToRead);
+                int bytesToRead = (int) Math.min(downloadFileSize - bytesRead, byteBuf.readableBytes());
+                byteBuf.readBytes(fileOutputStream, bytesToRead);
                 bytesRead += bytesToRead;
-                if(bytesRead == downloadFileSize) {
+                if (bytesRead == downloadFileSize) {
                     fileOutputStream.close();
                     fileOutputStream = null;
                     completeRequest();

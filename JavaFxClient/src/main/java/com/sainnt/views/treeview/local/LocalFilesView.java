@@ -4,7 +4,6 @@ import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.LocalFileRepresentation;
 import com.sainnt.observer.DirectoryObserver;
 import com.sainnt.observer.LocalDirectoryObservable;
-import com.sainnt.views.treeview.FileCell;
 import com.sainnt.views.treeview.FileTreeItem;
 import com.sainnt.views.treeview.FilesView;
 import javafx.scene.control.TreeItem;
