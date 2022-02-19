@@ -1,10 +1,14 @@
 package com.sainnt.files;
 
+import com.sainnt.dto.RemoteFileDto;
 import com.sainnt.net.CloudClient;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class RemoteFileRepresentation implements FileRepresentation {
     private final long id;
@@ -44,11 +48,6 @@ public class RemoteFileRepresentation implements FileRepresentation {
         return children;
     }
 
-    @Override
-    public File getFile() {
-        return null;
-    }
-
 
     @Override
     public void copyFileToDirectory(File file) {
@@ -78,5 +77,9 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     public RemoteFileRepresentation getParent() {
         return parent;
+    }
+
+    public RemoteFileDto getDto() {
+        return new RemoteFileDto(name, id);
     }
 }

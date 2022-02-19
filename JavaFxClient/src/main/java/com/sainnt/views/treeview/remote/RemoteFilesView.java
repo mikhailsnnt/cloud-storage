@@ -8,6 +8,7 @@ import javafx.scene.control.TreeItem;
 
 public class RemoteFilesView extends FilesView {
     public RemoteFilesView() {
+        setCellFactory(fileRepresentationTreeView -> new RemoteFileCell());
         setShowRoot(false);
         RemoteFileRepresentation rootItem = new RemoteFileRepresentation(1, null, "", true);
         initiateRoot(new RemoteFileTreeItem(rootItem));

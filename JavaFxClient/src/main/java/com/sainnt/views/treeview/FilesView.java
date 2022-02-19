@@ -6,7 +6,6 @@ import javafx.scene.control.TreeView;
 
 public abstract class FilesView extends TreeView<FileRepresentation> {
     public FilesView() {
-        setCellFactory(new FileCellFactory());
         getStylesheets().add("tree-view-style.css");
     }
 

@@ -7,8 +7,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeItem;
 
-import java.util.function.Consumer;
-
 public abstract class FileTreeItem extends TreeItem<FileRepresentation> implements DirectoryObserver {
     private boolean firstTimeLoad = true;
 
