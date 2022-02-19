@@ -14,8 +14,6 @@ public interface FileRepresentation {
 
     ObservableList<FileRepresentation> getChildren();
 
-    File getFile();
-
     void copyFileToDirectory(File file);
 
     void loadContent();

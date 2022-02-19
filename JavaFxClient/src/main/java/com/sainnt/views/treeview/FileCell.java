@@ -1,8 +1,10 @@
 package com.sainnt.views.treeview;
 
+import com.sainnt.dto.RemoteFileDto;
 import com.sainnt.exception.FileAlreadyExistsException;
 import com.sainnt.exception.FileRenamingFailedException;
 import com.sainnt.files.FileRepresentation;
+import com.sainnt.files.RemoteFileRepresentation;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
@@ -80,7 +82,7 @@ public abstract class FileCell extends TreeCell<FileRepresentation> {
         });
     }
 
-    private void displayError(String header, String content) {
+    protected void displayError(String header, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setHeaderText(header);
         alert.setContentText(content);
@@ -88,9 +90,11 @@ public abstract class FileCell extends TreeCell<FileRepresentation> {
     }
 
     protected boolean isAbleToDrop(FileRepresentation item, Dragboard dragboard) {
-        if (item == null || item.isFile() || !dragboard.hasFiles())
+        if (item == null || item.isFile())
             return false;
         // Recursive copying check:
-        return (!item.getPath().startsWith(dragboard.getFiles().get(0).toString() + ""));
+        if(dragboard.hasFiles())
+            return (!item.getPath().startsWith(dragboard.getFiles().get(0).toString() + ""));
+        return dragboard.hasContent(RemoteFileDto.dataFormat);
     }
 }

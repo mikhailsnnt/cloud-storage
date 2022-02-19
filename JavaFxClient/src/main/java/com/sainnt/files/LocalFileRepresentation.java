@@ -50,7 +50,7 @@ public class LocalFileRepresentation implements FileRepresentation {
         return children;
     }
 
-    @Override
+
     public File getFile() {
         return path.toFile();
     }
