@@ -5,6 +5,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public class RemoteFileRepresentation implements FileRepresentation {
     private final long id;
@@ -46,7 +50,23 @@ public class RemoteFileRepresentation implements FileRepresentation {
 
     @Override
     public File getFile() {
-        return null;
+        File cachedFile = Path.of("local_cache/" + id).toFile();
+        if (!cachedFile.exists()) {
+            try {
+                if (!cachedFile.createNewFile())
+                    throw  new RuntimeException();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            CloudClient.getClient().downloadFile(id,cachedFile);
+        }
+        Path tempFile = Path.of("local_cache/temp/"+name);
+        try {
+            Files.copy(cachedFile.toPath(),tempFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return tempFile.toFile();
     }
 
 

@@ -31,6 +31,7 @@ public class OperationHandler extends ByteToMessageDecoder {
 
     int operationCode = -1;
     private int exceptionCode = -1;
+    private long header = -1;
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
@@ -65,10 +66,24 @@ public class OperationHandler extends ByteToMessageDecoder {
             handleFileUpload(byteBuf);
         else if (operationCode == 9) {
            operationCode = -1;
-            CloudClient.getClient().fileUploadCompleted();
+            client.fileUploadCompleted();
         } else if (operationCode == 112) {
             operationCode = -1;
-            CloudClient.getClient().deleteFileCompleted();
+            client.deleteFileCompleted();
+        }
+        else if(operationCode == 114){
+            if(header == -1)
+            {
+                if(byteBuf.readableBytes()<8)
+                    return;
+                header = byteBuf.readLong();
+                client.setDownloadFileSize(header);
+            }
+            if(client.handleFileDownloadPortion(byteBuf))
+            {
+                header = -1;
+                operationCode = -1;
+            }
         }
 
 

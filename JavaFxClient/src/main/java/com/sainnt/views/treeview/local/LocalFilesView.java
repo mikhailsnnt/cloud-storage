@@ -4,6 +4,7 @@ import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.LocalFileRepresentation;
 import com.sainnt.observer.DirectoryObserver;
 import com.sainnt.observer.LocalDirectoryObservable;
+import com.sainnt.views.treeview.FileCell;
 import com.sainnt.views.treeview.FileTreeItem;
 import com.sainnt.views.treeview.FilesView;
 import javafx.scene.control.TreeItem;
@@ -13,9 +14,9 @@ import java.nio.file.Paths;
 
 public class LocalFilesView extends FilesView {
     public LocalFilesView() {
+        setCellFactory(fileRepresentationTreeView -> new LocalFileCell());
         setHomeDirPath();
         setShowRoot(false);
-
     }
 
     private void setHomeDirPath() {
@@ -42,6 +43,7 @@ public class LocalFilesView extends FilesView {
     }
 
     @Override
+
     protected void processExpand(FileTreeItem.TreeModificationEvent<FileRepresentation> event) {
         LocalDirectoryObservable.getInstance().addObserver((DirectoryObserver) event.getTreeItem());
     }

@@ -5,10 +5,7 @@ import com.sainnt.dto.SignUpResult;
 import com.sainnt.files.FileRepresentation;
 import com.sainnt.files.RemoteFileRepresentation;
 import com.sainnt.net.handler.LoginHandler;
-import com.sainnt.net.requests.CreateFolderRequest;
-import com.sainnt.net.requests.DeleteFileRequest;
-import com.sainnt.net.requests.ListFilesRequest;
-import com.sainnt.net.requests.UploadFileRequest;
+import com.sainnt.net.requests.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -19,7 +16,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -39,6 +36,10 @@ public class CloudClient {
     private boolean performingRequest;
     private final BlockingQueue<Request> requestQueue = new ArrayBlockingQueue<>(15);
     private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
+
+    private long downloadFileSize;
+    private long bytesRead;
+    private BufferedOutputStream fileOutputStream;
 
     public synchronized static CloudClient getClient() {
         if (client == null) {
@@ -263,5 +264,43 @@ public class CloudClient {
             file.getParent().getChildren().remove(file);
             completeRequest();
         }
+    }
+
+    public void downloadFile(long id, File file) {
+        requestQueue.add(new DownloadFileRequests(id,file));
+        pollRequest();
+    }
+
+
+    public boolean handleFileDownloadPortion(ByteBuf byteBuf) {
+        if( currentRequest instanceof DownloadFileRequests requests)
+        {
+            if(fileOutputStream == null) {
+                try {
+                    fileOutputStream = new BufferedOutputStream(new FileOutputStream(requests.getDestination()));
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            try {
+                int bytesToRead = (int)Math.min(downloadFileSize - bytesRead, byteBuf.readableBytes());
+                byteBuf.readBytes(fileOutputStream,bytesToRead);
+                bytesRead += bytesToRead;
+                if(bytesRead == downloadFileSize) {
+                    fileOutputStream.close();
+                    fileOutputStream = null;
+                    completeRequest();
+                    return true;
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+
+    public void setDownloadFileSize(long size) {
+        downloadFileSize = size;
+        bytesRead = 0;
     }
 }
