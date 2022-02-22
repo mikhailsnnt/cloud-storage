@@ -36,10 +36,20 @@ public class CloudClient {
     private boolean performingRequest;
     private final BlockingQueue<Request> requestQueue = new ArrayBlockingQueue<>(15);
     private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
-
     private long downloadFileSize;
     private long bytesRead;
     private BufferedOutputStream fileOutputStream;
+
+    private Runnable onRequestStarted;
+    private Runnable onRequestCompleted;
+
+    public void setOnRequestStarted(Runnable onRequestStarted) {
+        this.onRequestStarted = onRequestStarted;
+    }
+
+    public void setOnRequestCompleted(Runnable onRequestCompleted) {
+        this.onRequestCompleted = onRequestCompleted;
+    }
 
     public synchronized static CloudClient getClient() {
         if (client == null) {
@@ -188,6 +198,8 @@ public class CloudClient {
         if (!performingRequest && !requestQueue.isEmpty()) {
             currentRequest = requestQueue.poll();
             performingRequest = true;
+            if(onRequestStarted != null)
+                onRequestStarted.run();
             currentRequest.perform(channel);
         }
     }
@@ -216,6 +228,8 @@ public class CloudClient {
     private void completeRequest() {
         performingRequest = false;
         currentRequest = null;
+        if(onRequestCompleted!=null)
+            onRequestCompleted.run();
         pollRequest();
     }
 

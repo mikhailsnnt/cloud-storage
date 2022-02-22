@@ -51,6 +51,8 @@ public class App extends Application {
         //Initialising file views
         LocalFilesView localFilesView = new LocalFilesView();
         RemoteFilesView remoteFilesView = new RemoteFilesView();
+        CloudClient.getClient().setOnRequestStarted(remoteFilesView::showProgressIndicator);
+        CloudClient.getClient().setOnRequestCompleted(remoteFilesView::hideProgressIndicator);
         AnchorPane localSide = getColoredPaneWithView(localFilesView, "#FFFAF0");
         AnchorPane remoteSide = getColoredPaneWithView(remoteFilesView, "#E0FFFF");
         SplitPane splitPane = new SplitPane(localSide, remoteSide);
