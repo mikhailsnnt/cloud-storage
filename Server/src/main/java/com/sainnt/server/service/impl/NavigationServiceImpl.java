@@ -85,7 +85,7 @@ public class NavigationServiceImpl implements NavigationService {
     }
 
     @Override
-    public void createDirectory(long parentId, String dirName, User user) {
+    public Directory createDirectory(long parentId, String dirName, User user) {
         if (invalidDirectoryName(dirName))
             throw new InvalidFileNameException(dirName);
         Directory dir = accessDirectoryById(parentId, user);
@@ -103,28 +103,22 @@ public class NavigationServiceImpl implements NavigationService {
         }
         dir.getSubDirs().add(newDir);
         updateDirEntity(dir);
+        return newDir;
     }
 
     @Override
-    public void deleteDirectory(String path, User user) {
-        Directory dir = accessDirectoryByPath(path, user);
+    public void deleteDirectory(long id, User user) {
+        Directory dir = accessDirectoryById(id, user);
         deleteDirectory(dir);
     }
 
     @Override
-    public void renameDirectory(String path, User user, String newName) {
+    public void renameDirectory(long id, User user, String newName) {
         if (invalidDirectoryName(newName))
             throw new InvalidFileNameException(newName);
-        String parentPath = getParentDirectory(path);
-        Directory parendDir = accessDirectoryByPath(parentPath, user);
-        if (fileOrDirExists(parendDir, newName))
-            throw new FileAlreadyExistsException(path + "/" + newName);
-        String oldName = getFilename(path);
-        Directory dir = parendDir.getSubDirs()
-                .stream()
-                .filter(t -> t.getName().equals(oldName))
-                .findFirst()
-                .orElseThrow(() -> new DirectoryNotFoundException(path));
+        Directory dir = accessDirectoryById(id, user);
+        if (fileOrDirExists(dir.getParent(), newName))
+            throw new DirectoryAlreadyExists(newName);
         dir.setName(newName);
         updateDirEntity(dir);
     }
@@ -194,41 +188,22 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     public void deleteFile(long id, User user) {
-        try {
-            File file = accessFileById(id, user);
-            fileRepository.deleteFile(file);
-            Files.deleteIfExists(Path.of("files/" + file.getId()));
-        } catch (DaoException exception) {
-            log.error("Deleting file[{}] entity exception", id, exception);
-            throw new InternalServerError();
-        } catch (IOException exception) {
-            log.info("Deleting file[{}]  exception", id, exception);
-            throw new InternalServerError();
-        }
+        File file = accessFileById(id, user);
+        deleteFile(file);
     }
 
     @Override
-    public void renameFile(String path, User user, String newName) {
+    public void renameFile(long id, User user, String newName) {
         if (invalidFilename(newName))
             throw new InvalidFileNameException(newName);
-        String parentPath = getParentDirectory(path);
-        Directory parendDir = accessDirectoryByPath(parentPath, user);
-        if (fileOrDirExists(parendDir, newName))
-            throw new FileAlreadyExistsException(path + "/" + newName);
-        String oldName = getFilename(path);
-        File file = parendDir.getFiles()
-                .stream()
-                .filter(t -> t.getName().equals(oldName))
-                .findFirst()
-                .orElseThrow(() -> new FileNotFoundException(path));
+        File file = accessFileById(id,user);
+        if (fileOrDirExists(file.getParentDirectory(), newName))
+            throw new FileAlreadyExistsException(newName);
         file.setName(newName);
         updateFileEntity(file);
     }
 
 
-    private void saveDirEntity(Directory dir) {
-
-    }
 
     private void updateDirEntity(Directory dir) {
         try {
@@ -241,9 +216,23 @@ public class NavigationServiceImpl implements NavigationService {
 
     private void deleteDirectory(Directory dir) {
         try {
+            dir.getSubDirs().forEach(this::deleteDirectory);
+            dir.getFiles().forEach(this::deleteFile);
             dirRepository.deleteDirectory(dir);
         } catch (DaoException exception) {
             log.error("Deleting dir entity exception", exception);
+            throw new InternalServerError();
+        }
+    }
+    private void deleteFile(File file){
+        try {
+            fileRepository.deleteFile(file);
+            Files.deleteIfExists(Path.of("files/" + file.getId()));
+        } catch (DaoException exception) {
+            log.error("Deleting file[{}] entity exception", file.getId(), exception);
+            throw new InternalServerError();
+        } catch (IOException exception) {
+            log.info("Deleting file[{}]  exception", file.getId(), exception);
             throw new InternalServerError();
         }
     }

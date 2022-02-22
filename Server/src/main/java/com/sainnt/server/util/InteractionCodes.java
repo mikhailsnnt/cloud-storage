@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class InteractionCodes {
+
     private InteractionCodes() {
     }
 
@@ -26,6 +27,9 @@ public class InteractionCodes {
     public static final int CODE_OP_DELETED_FILE = 112;
     public static final int CODE_OP_LIST_FILES = 113;
     public static final int CODE_OP_START_DOWNLOAD = 114;
+    public static final int CODE_OP_RENAMED_FILE = 115;
+    public static final int CODE_OP_RENAMED_DIRECTORY = 116;
+    public static final int CODE_OP_DELETED_DIRECTORY = 117;
 
     private static final Map<Integer, Class<? extends RequestBuilder>> REQUEST_CODES;
     private static final Map<Class<? extends ClientAvailableException>, Integer> EXCEPTION_CODES;
@@ -39,6 +43,9 @@ public class InteractionCodes {
         REQUEST_CODES.put(22, DeleteFileRequestBuilder.class);
         REQUEST_CODES.put(23, FilesListRequestBuilder.class);
         REQUEST_CODES.put(24, DownloadFileRequestBuilder.class);
+        REQUEST_CODES.put(25,RenameFileRequestBuilder.class);
+        REQUEST_CODES.put(26, RenameDirectoryRequestBuilder.class);
+        REQUEST_CODES.put(27, DeleteDirectoryRequestBuilder.class);
 
         REGISTRATION_RESULT_CODES = new HashMap<>();
         REGISTRATION_RESULT_CODES.put(RegistrationResult.success, 50);

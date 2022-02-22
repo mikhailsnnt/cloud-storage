@@ -32,14 +32,17 @@ public class PipeLineBuilderImpl implements PipeLineBuilder {
     public void buildUserPipeLine(ChannelPipeline pipeline, User user) {
         OperationDecoder operationDecoder = new OperationDecoder(user, authService);
         pipeline.addLast(operationDecoder);
-        pipeline.addLast(new CreateFolderRequestHandler(navigationService));
+        pipeline.addLast(new CreateDirectoryRequestHandler(navigationService));
         pipeline.addLast(new UploadFileRequestHandler(fileService, operationDecoder));
         pipeline.addLast(new DeleteFileRequestHandler(navigationService));
+        pipeline.addLast(new DeleteDirectoryRequestHandler(navigationService));
         pipeline.addLast(new FileDtoResponseEncoder());
         pipeline.addLast(new FilesListResponseHandler());
         pipeline.addLast(new FilesListRequestHandler(fileService));
         pipeline.addLast(new DownloadOperationResponseHandler());
         pipeline.addLast(new DownloadFileRequestHandler(fileService));
+        pipeline.addLast(new RenameFileRequestHandler(navigationService));
+        pipeline.addLast(new RenameDirectoryRequestHandler(navigationService));
         pipeline.addLast(new ExceptionHandler());
     }
 }
