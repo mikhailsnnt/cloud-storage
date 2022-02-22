@@ -27,12 +27,6 @@ public class RemoteFilesView extends StackPane {
 
             }
         };
-        filesView.setCellFactory(fileRepresentationTreeView -> new RemoteFileCell());
-        filesView.setShowRoot(false);
-        RemoteFileRepresentation rootItem = new RemoteFileRepresentation(1, null, "", true);
-        filesView.initiateRoot(new RemoteFileTreeItem(rootItem));
-        CloudClient.getClient().addRemoteFileRepresentation(rootItem);
-        getChildren().add(filesView);
     }
 
     public void showProgressIndicator(){
@@ -52,6 +46,15 @@ public class RemoteFilesView extends StackPane {
             filesView.setDisable(false);
             getChildren().remove(progressIndicatorBox);
         });
+    }
+
+    public void load(){
+        filesView.setCellFactory(fileRepresentationTreeView -> new RemoteFileCell());
+        filesView.setShowRoot(false);
+        RemoteFileRepresentation rootItem = new RemoteFileRepresentation(1, null, "", true);
+        filesView.initiateRoot(new RemoteFileTreeItem(rootItem));
+        CloudClient.getClient().addRemoteFileRepresentation(rootItem);
+        getChildren().add(filesView);
     }
 
 
