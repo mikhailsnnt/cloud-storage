@@ -74,12 +74,13 @@ public class LocalFileRepresentation implements FileRepresentation {
     }
 
     @Override
-    public void setName(String name) throws FileAlreadyExistsException, FileRenamingFailedException {
+    public void rename(String name, Runnable onComplete) throws FileAlreadyExistsException, FileRenamingFailedException {
         Path newPath = path.getParent().resolve(name);
         if (Files.exists(newPath))
             throw new FileAlreadyExistsException(newPath.toString());
         if (!path.toFile().renameTo(newPath.toFile()))
             throw new FileRenamingFailedException(newPath.toString());
+        onComplete.run();
     }
 
     private boolean filterFiles(Path file) {

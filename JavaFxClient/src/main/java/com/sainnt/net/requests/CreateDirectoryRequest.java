@@ -7,13 +7,21 @@ import io.netty.channel.ChannelFuture;
 
 import java.nio.charset.StandardCharsets;
 
-public class CreateFolderRequest extends UndoableRequest {
+public class CreateDirectoryRequest extends UndoableRequest {
     private final String name;
     private final long parentId;
 
-    public CreateFolderRequest(String name, long parentId) {
+    public CreateDirectoryRequest(String name, long parentId) {
         this.name = name;
         this.parentId = parentId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public long getParentId() {
+        return parentId;
     }
 
     @Override
