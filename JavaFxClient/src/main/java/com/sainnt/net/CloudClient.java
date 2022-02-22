@@ -246,7 +246,9 @@ public class CloudClient {
 
     public void handleFileUploadResponse(long dirId, String name, long fileId) {
         RemoteFileRepresentation dir = idToRemoteFile.get(dirId);
-        dir.getChildren().add(new RemoteFileRepresentation(fileId, dir, name, false));
+        RemoteFileRepresentation newFile = new RemoteFileRepresentation(fileId, dir, name, false);
+        addRemoteFileRepresentation(newFile);
+        dir.getChildren().add(newFile);
         File file = ((UploadFileRequest) currentRequest).getFile();
         FileRegion fileRegion = new DefaultFileRegion(file, 0, file.length());
         channel.writeAndFlush(fileRegion);
