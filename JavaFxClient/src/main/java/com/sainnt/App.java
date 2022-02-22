@@ -18,6 +18,7 @@ import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * JavaFX App
@@ -28,10 +29,33 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        CloudClient.getClient();
         this.stage.setOnCloseRequest(windowEvent -> closeApp());
-        initializeLoginScene();
+        initializeLoadingScene();
+        connect();
 
+
+    }
+    private void connect(){
+        CloudClient.connect(this::initializeLoginScene, s->{
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Connection failed");
+            alert.setContentText(s);
+            Optional<ButtonType> pressedButton = alert.showAndWait();
+            if(pressedButton.isPresent() && pressedButton.get() == ButtonType.OK)
+                connect();
+        });
+    }
+
+    public void initializeLoadingScene(){
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("connection_page.fxml"));
+        try {
+            Scene scene = new Scene(fxmlLoader.load());
+            stage.setTitle("Cloud-storage");
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void initializeLoginScene() {
@@ -51,6 +75,9 @@ public class App extends Application {
         //Initialising file views
         LocalFilesView localFilesView = new LocalFilesView();
         RemoteFilesView remoteFilesView = new RemoteFilesView();
+        CloudClient.getClient().setOnRequestStarted(remoteFilesView::showProgressIndicator);
+        CloudClient.getClient().setOnRequestCompleted(remoteFilesView::hideProgressIndicator);
+        remoteFilesView.load();
         AnchorPane localSide = getColoredPaneWithView(localFilesView, "#FFFAF0");
         AnchorPane remoteSide = getColoredPaneWithView(remoteFilesView, "#E0FFFF");
         SplitPane splitPane = new SplitPane(localSide, remoteSide);

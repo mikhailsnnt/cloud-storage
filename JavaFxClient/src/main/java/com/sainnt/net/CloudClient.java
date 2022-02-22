@@ -29,52 +29,70 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class CloudClient {
+    public CloudClient() {
+        workerGroup = new NioEventLoopGroup();
+        bootstrap = new Bootstrap();
+        bootstrap.group(workerGroup);
+        bootstrap.channel(NioSocketChannel.class)
+                .remoteAddress(new InetSocketAddress("localhost", 9096));
+        bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) {
+
+            }
+        });
+    }
+
     private static CloudClient client;
     private boolean connected = false;
-    private EventLoopGroup workerGroup;
+    private final EventLoopGroup workerGroup;
+    private final  Bootstrap bootstrap;
     private Request currentRequest;
     private boolean performingRequest;
     private final BlockingQueue<Request> requestQueue = new ArrayBlockingQueue<>(15);
     private final Map<Long, RemoteFileRepresentation> idToRemoteFile = new HashMap<>();
-
     private long downloadFileSize;
     private long bytesRead;
     private BufferedOutputStream fileOutputStream;
 
+    private Runnable onRequestStarted;
+    private Runnable onRequestCompleted;
+
+    public void setOnRequestStarted(Runnable onRequestStarted) {
+        this.onRequestStarted = onRequestStarted;
+    }
+
+    public void setOnRequestCompleted(Runnable onRequestCompleted) {
+        this.onRequestCompleted = onRequestCompleted;
+    }
+
     public synchronized static CloudClient getClient() {
+        return client;
+    }
+
+    public synchronized static void connect(Runnable callback, Consumer<String> exceptionAlertProvider){
         if (client == null) {
             client = new CloudClient();
-            client.initConnection();
         }
-        return client;
+        if(!client.connected)
+            client.initConnection(callback,exceptionAlertProvider);
     }
 
     private Channel channel;
     private Task<Channel> connectTask;
 
-    public void initConnection() {
+    public void initConnection(Runnable callback, Consumer<String> exceptionAlertProvider) {
         if (connected) {
             log.info("initConnection() declined, already connected");
             return;
         }
-        workerGroup = new NioEventLoopGroup();
+
         connectTask = new Task<>() {
             @Override
             protected Channel call() throws Exception {
-                Bootstrap b = new Bootstrap();                    // (1)
-                b.group(workerGroup);                             // (2)
-                b.channel(NioSocketChannel.class)
-                        .remoteAddress(new InetSocketAddress("localhost", 9096));                // (3)
-                b.option(ChannelOption.SO_KEEPALIVE, true);
-                b.handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    public void initChannel(SocketChannel ch) {
-//                        handler = new OperationHandler();
-//                        ch.pipeline().addLast(new ChannelInboundHandlerAdapter());
 
-                    }
-                });
-                ChannelFuture f = b.connect();
+                ChannelFuture f = bootstrap.connect();
                 Channel chn = f.channel();
                 f.sync();
                 return chn;
@@ -85,14 +103,16 @@ public class CloudClient {
                 log.info("Connected successfully");
                 channel = getValue();
                 connected = true;
+                callback.run();
             }
 
             @Override
             protected void failed() {
-                workerGroup.shutdownGracefully();
                 Throwable e = getException();
+                exceptionAlertProvider.accept(e.getMessage());
                 log.error("Connection error", e);
                 connected = false;
+
             }
         };
         Thread thread = new Thread(connectTask);
@@ -101,10 +121,6 @@ public class CloudClient {
     }
 
     public void closeConnection() {
-        if (!connected) {
-            log.info("Connection close declined,not connected");
-            return;
-        }
         workerGroup.shutdownGracefully();
     }
 
@@ -188,6 +204,8 @@ public class CloudClient {
         if (!performingRequest && !requestQueue.isEmpty()) {
             currentRequest = requestQueue.poll();
             performingRequest = true;
+            if(onRequestStarted != null)
+                onRequestStarted.run();
             currentRequest.perform(channel);
         }
     }
@@ -216,6 +234,8 @@ public class CloudClient {
     private void completeRequest() {
         performingRequest = false;
         currentRequest = null;
+        if(onRequestCompleted!=null)
+            onRequestCompleted.run();
         pollRequest();
     }
 
@@ -226,7 +246,9 @@ public class CloudClient {
 
     public void handleFileUploadResponse(long dirId, String name, long fileId) {
         RemoteFileRepresentation dir = idToRemoteFile.get(dirId);
-        dir.getChildren().add(new RemoteFileRepresentation(fileId, dir, name, false));
+        RemoteFileRepresentation newFile = new RemoteFileRepresentation(fileId, dir, name, false);
+        addRemoteFileRepresentation(newFile);
+        dir.getChildren().add(newFile);
         File file = ((UploadFileRequest) currentRequest).getFile();
         FileRegion fileRegion = new DefaultFileRegion(file, 0, file.length());
         channel.writeAndFlush(fileRegion);

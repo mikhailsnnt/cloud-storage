@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="353.0"
+      prefWidth="538.0" xmlns="http://javafx.com/javafx/17">
+   <ImageView fitHeight="290.0" fitWidth="381.0" layoutX="88.0" layoutY="14.0" pickOnBounds="true"
+              preserveRatio="true">
+      <Image url="clouds.png"/>
+   </ImageView>
+   <ProgressIndicator layoutX="310.0" layoutY="315.0" prefHeight="40.0" prefWidth="31.0"/>
+   <Label layoutX="143.0" layoutY="319.0" text="Connecting to server">
+      <font>
+         <Font size="17.0"/>
+      </font>
+   </Label>
+</Pane>
