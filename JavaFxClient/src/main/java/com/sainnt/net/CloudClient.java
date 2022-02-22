@@ -193,7 +193,7 @@ public class CloudClient {
     }
 
     public void createRemoteDirectory(long parentId, String name) {
-        requestQueue.add(new CreateFolderRequest(name, parentId));
+        requestQueue.add(new CreateDirectoryRequest(name, parentId));
         pollRequest();
     }
 
@@ -232,8 +232,13 @@ public class CloudClient {
         channel.writeAndFlush(fileRegion);
     }
 
-    public void renameFileRequest(long id, String name) {
-        // Not implemented on server side yet
+    public void renameFileRequest(long id, String name, Runnable onComplete) {
+        requestQueue.add(new RenameFileRequest(id,name, idToRemoteFile.get(id).getName(),onComplete));
+        pollRequest();
+    }
+    public void renameDirectoryRequest(long id, String name, Runnable onComplete) {
+        requestQueue.add(new RenameDirectoryRequest(id,name, idToRemoteFile.get(id).getName(),onComplete));
+        pollRequest();
     }
 
     public void deleteFileRequest(long id) {
@@ -242,7 +247,8 @@ public class CloudClient {
     }
 
     public void deleteDirectoryRequest(long id) {
-        // Not implemented on server side yet
+        requestQueue.add(new DeleteDirectoryRequest(id));
+        pollRequest();
     }
 
     public void addRemoteFileRepresentation(RemoteFileRepresentation item) {
@@ -301,5 +307,43 @@ public class CloudClient {
     public void setDownloadFileSize(long size) {
         downloadFileSize = size;
         bytesRead = 0;
+    }
+
+    public void fileRenameCompleted() {
+        if(currentRequest instanceof RenameFileRequest request){
+            idToRemoteFile.get(request.getId()).setName(request.getNewName());
+            request.getOnComplete().run();
+        }
+        completeRequest();
+    }
+    public void directoryRenameCompleted() {
+        if(currentRequest instanceof RenameDirectoryRequest request){
+            idToRemoteFile.get(request.getId()).setName(request.getNewName());
+            request.getOnComplete().run();
+        }
+        completeRequest();
+    }
+
+    public void exceptionCaught() {
+        completeRequest();
+    }
+
+    public void directoryDeleteCompleted() {
+        if(currentRequest instanceof DeleteDirectoryRequest request){
+            RemoteFileRepresentation dir = idToRemoteFile.get(request.getId());
+            dir.getParent().getChildren().remove(dir);
+            idToRemoteFile.remove(dir.getId());
+        }
+        completeRequest();
+    }
+
+    public void directoryCreateCompleted(long dirId) {
+        if(currentRequest instanceof CreateDirectoryRequest request){
+            RemoteFileRepresentation parentDir = idToRemoteFile.get(request.getParentId());
+            RemoteFileRepresentation newDir = new RemoteFileRepresentation(dirId,parentDir,request.getName(),true);
+            addRemoteFileRepresentation(newDir);
+            parentDir.getChildren().add(newDir);
+        }
+        completeRequest();
     }
 }

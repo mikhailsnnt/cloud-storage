@@ -4,16 +4,22 @@ import com.sainnt.dto.RemoteFileDto;
 import com.sainnt.exception.FileAlreadyExistsException;
 import com.sainnt.exception.FileRenamingFailedException;
 import com.sainnt.files.FileRepresentation;
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Background;
 import javafx.scene.paint.Paint;
 
+import java.util.Objects;
+
 public abstract class FileCell extends TreeCell<FileRepresentation> {
     private TextField textField;
+    private final Image directoryIcon = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icon/folder.png")));
     protected static final Background activeBackground = Background.fill(Paint.valueOf("#33bd4a"));
 
     public FileCell() {
@@ -36,7 +42,10 @@ public abstract class FileCell extends TreeCell<FileRepresentation> {
         } else {
             setText(file.getName());
             setContextMenu(((FileTreeItem) getTreeItem()).getMenu(this::startEdit));
-            setGraphic(null);
+            if (getItem().isFile())
+                setGraphic(null);
+            else
+                setGraphic(new ImageView(directoryIcon));
         }
     }
 
@@ -65,7 +74,7 @@ public abstract class FileCell extends TreeCell<FileRepresentation> {
         textField.setOnKeyReleased(keyEvent -> {
             if (keyEvent.getCode() == KeyCode.ENTER) {
                 try {
-                    getItem().setName(textField.getText());
+                    getItem().rename(textField.getText(), ()-> Platform.runLater(()->updateItem(getItem(),false)));
                 } catch (FileAlreadyExistsException e) {
                     displayError("Could not rename, file already exists", e.getMessage());
                     return;

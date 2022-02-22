@@ -17,11 +17,11 @@ public interface NavigationService {
 
     DirectoryWithAccessInfo findDirectoryWithAccessInfoById(long id, User user);
 
-    void createDirectory(long parentId, String path, User user);
+    Directory createDirectory(long parentId, String path, User user);
 
-    void deleteDirectory(String path, User user);
+    void deleteDirectory(long id, User user);
 
-    void renameDirectory(String path, User user, String newName);
+    void renameDirectory(long id, User user, String newName);
 
     Set<Directory> getSubDirectories(String path, User user);
 
@@ -35,7 +35,7 @@ public interface NavigationService {
 
     void deleteFile(long id, User user);
 
-    void renameFile(String path, User user, String newName);
+    void renameFile(long id, User user, String newName);
 
     void updateFileEntity(File file);
 }

@@ -40,8 +40,10 @@ public class OperationHandler extends ByteToMessageDecoder {
                 return;
             int responseCode = byteBuf.readInt();
             System.out.println("Response: " + responseCode);
-            if (CodesInfo.isExceptionCode(responseCode))
+            if (CodesInfo.isExceptionCode(responseCode)){
                 exceptionCode = responseCode;
+                client.exceptionCaught();
+            }
             else if (responseCode != 7) {
                 operationCode = responseCode;
             }
@@ -67,7 +69,15 @@ public class OperationHandler extends ByteToMessageDecoder {
         else if (operationCode == 9) {
             operationCode = -1;
             client.fileUploadCompleted();
-        } else if (operationCode == 112) {
+        }
+        else if(operationCode == 110){
+            if(byteBuf.readableBytes()<8)
+                return;
+            long dirId = byteBuf.readLong();
+            client.directoryCreateCompleted(dirId);
+            operationCode = -1;
+        }
+        else if (operationCode == 112) {
             operationCode = -1;
             client.deleteFileCompleted();
         } else if (operationCode == 114) {
@@ -81,7 +91,20 @@ public class OperationHandler extends ByteToMessageDecoder {
                 header = -1;
                 operationCode = -1;
             }
+        }else if(operationCode == 115){
+            client.fileRenameCompleted();
+            operationCode = -1;
         }
+        else if(operationCode == 116)
+        {
+            client.directoryRenameCompleted();
+            operationCode = -1;
+        }
+        else if(operationCode == 117){
+            client.directoryDeleteCompleted();
+            operationCode = -1;
+        }
+
 
 
     }

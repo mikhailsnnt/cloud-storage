@@ -13,7 +13,7 @@ import java.nio.file.Path;
 public class RemoteFileRepresentation implements FileRepresentation {
     private final long id;
     private RemoteFileRepresentation parent;
-    private final String name;
+    private  String name;
     private boolean firstTimeLoad = true;
     private final boolean isDirectory;
     private final ObservableList<FileRepresentation> children;
@@ -63,8 +63,15 @@ public class RemoteFileRepresentation implements FileRepresentation {
     }
 
     @Override
+    public void rename(String name, Runnable onComplete) {
+        if(isDirectory)
+            CloudClient.getClient().renameDirectoryRequest(getId(),name, onComplete);
+        else
+            CloudClient.getClient().renameFileRequest(getId(), name, onComplete);
+    }
+
     public void setName(String name) {
-        CloudClient.getClient().renameFileRequest(getId(), name);
+        this.name = name;
     }
 
     public long getId() {
