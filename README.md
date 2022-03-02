@@ -1,6 +1,6 @@
 # Cloud storage app
 ## Motivation
-Main goal of my project is to build efficient cloud storage environment. For these purposes  I've defeined low-level  transport protocol.
+Main goal of my project is to build efficient cloud storage environment. For these purposes  I've defined low-level  transport protocol.
 Stumbling stone of developing worthy product  was to build user-friendly GUI.
 
 
