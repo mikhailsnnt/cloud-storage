@@ -24,7 +24,7 @@ For example:
 
 Despite working with byte level, __SOLID__ principles are followed.
 
-### Naviagation
+### Navigation
 Filesystem is provided via complex directory entity mapping. Folder sharing is defined.
 
 ## Client
