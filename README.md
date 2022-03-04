@@ -31,7 +31,7 @@ Filesystem is provided via complex directory entity mapping. Folder sharing is d
 Client application is built with Java 17 using __JavaFX__. Asynchronicity is established via using non-blocking __Netty__ framework for network exchange.
 
 ### GUI
-User-friendly interface is achived by __Drag and drop__ functionality, and using intuitively appealing context menus.
+User-friendliness of interface  is achived by __Drag and drop__ functionality, and using intuitively appealing context menus.
 Filesystems are represented by __custom TreeView__. Multiple scenes are staged. Client is always indicated with network operations progress.
 
 ### Architecture
