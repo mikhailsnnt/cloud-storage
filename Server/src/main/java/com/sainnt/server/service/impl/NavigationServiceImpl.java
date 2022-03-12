@@ -90,7 +90,7 @@ public class NavigationServiceImpl implements NavigationService {
             throw new InvalidFileNameException(dirName);
         Directory dir = accessDirectoryById(parentId, user);
         if (fileOrDirExists(dir, dirName))
-            throw new DirectoryAlreadyExists(dirName);
+            throw new DirectoryAlreadyExistsException(dirName);
         Directory newDir = new Directory();
         newDir.setName(dirName);
         newDir.setOwner(Set.of(user));
@@ -118,7 +118,7 @@ public class NavigationServiceImpl implements NavigationService {
             throw new InvalidFileNameException(newName);
         Directory dir = accessDirectoryById(id, user);
         if (fileOrDirExists(dir.getParent(), newName))
-            throw new DirectoryAlreadyExists(newName);
+            throw new DirectoryAlreadyExistsException(newName);
         dir.setName(newName);
         updateDirEntity(dir);
     }

@@ -63,7 +63,7 @@ public class InteractionCodes {
         EXCEPTION_CODES = new HashMap<>();
         EXCEPTION_CODES.put(AccessDeniedException.class, 200);
         EXCEPTION_CODES.put(CheckSumMismatchException.class, 201);
-        EXCEPTION_CODES.put(DirectoryAlreadyExists.class, 202);
+        EXCEPTION_CODES.put(DirectoryAlreadyExistsException.class, 202);
         EXCEPTION_CODES.put(DirectoryNotFoundException.class, 203);
         EXCEPTION_CODES.put(FileAlreadyExistsException.class, 204);
         EXCEPTION_CODES.put(FileNotFoundException.class, 205);
